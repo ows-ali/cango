@@ -61,7 +61,7 @@ describe("05 — Experience Player (review mode)", () => {
       expect(screen.getByText("At the Ticket Machine")).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    const mcqQuestion = screen.getByText(/what does "Fahrkarte" mean/i);
+    const mcqQuestion = screen.getByText(/Che cosa significa "biglietto"/i);
     expect(mcqQuestion).toBeInTheDocument();
   });
 

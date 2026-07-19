@@ -3,9 +3,9 @@
 **Version:** 0.1 MVP  
 **Product:** CanGo  
 **Platform:** Progressive Web App (PWA)  
-**Target Market:** Germany  
-**Primary Language:** German learning  
-**Audience:** International students, expats, professionals living in Germany
+**Target Market:** Italy  
+**Primary Language:** Italian learning  
+**Audience:** International students, expats, professionals living in Italy
 
 ---
 
@@ -13,7 +13,7 @@
 
 ### What is CanGo?
 
-CanGo is a real-life German learning platform designed to help people become confident living in Germany.
+CanGo is a real-life Italian learning platform designed to help people become confident living in Italy.
 
 Instead of traditional vocabulary-first learning, CanGo focuses on realistic situations people actually experience:
 
@@ -21,22 +21,22 @@ Instead of traditional vocabulary-first learning, CanGo focuses on realistic sit
 - visiting doctors
 - attending job interviews
 - dealing with daily bureaucracy
-- communicating in German society
+- communicating in Italian society
 
-The goal is not only to learn German.
+The goal is not only to learn Italian.
 
 The goal is:
 
-> **"Prepare for real life in Germany."**
+> **"Prepare for real life in Italy."**
 
 ---
 
 ## 2. Problem Statement
 
-Many German learners:
+Many Italian learners:
 
 - know grammar rules but struggle in real situations
-- cannot understand fast German speech
+- cannot understand fast Italian speech
 - panic during everyday conversations
 - learn isolated vocabulary without context
 
@@ -60,7 +60,7 @@ Existing apps often focus on:
 
 **International students**
 
-*Examples:* university students, Erasmus students, master's students in Germany
+*Examples:* university students, Erasmus students, master's students in Italy
 
 *Needs:*
 - university life
@@ -71,7 +71,7 @@ Existing apps often focus on:
 **Expats and professionals**
 
 *Needs:*
-- workplace German
+- workplace Italian
 - job interviews
 - appointments
 - professional communication
@@ -120,7 +120,7 @@ Premium European startup aesthetic.
 
 **Use:**
 
-- authentic Germany photography
+- authentic Italy photography
 - realistic environments
 - clean typography
 - subtle animations
@@ -131,15 +131,15 @@ Premium European startup aesthetic.
 
 ## 6. Core Product Concept
 
-### My Germany
+### My Italy
 
 The main learning area.
 
-Users practice German through real-world scenarios.
+Users practice Italian through real-world scenarios.
 
 *Example:*
 
-My Germany
+My Italy
 ├── Transportation
 ├── Doctor & Healthcare
 ├── Job Interview
@@ -221,11 +221,11 @@ Users can change level individually per scenario.
 
 *Content:*
 
-> Learn German for Real Life in Germany
+> Learn Italian for Real Life in Italy
 
 **CTA:** Start Learning
 
-### Screen 2: Select German Level
+### Screen 2: Select Italian Level
 
 **Options:**
 - A2
@@ -276,7 +276,7 @@ After signup:
 
 ---
 
-## 11. Home Screen — My Germany
+## 11. Home Screen — My Italy
 
 **Purpose:** Main dashboard.
 
@@ -288,7 +288,7 @@ After signup:
 
 *Example:*
 
-> **My Germany 🇩🇪**  
+> **My Italy 🇩🇪**  
 > 🔥 7 day streak  
 > ⭐ 540 XP
 > 
@@ -344,7 +344,7 @@ Core learning screen.
 **Contains:**
 
 **Audio:**
-- realistic German voice
+- realistic Italian voice
 - unlimited replay
 
 **Transcript:**
@@ -354,16 +354,16 @@ Hidden by default.
 Toggle: **Show Transcript**
 
 **Modes:**
-- German only
-- German + English
+- Italian only
+- Italian + English
 
-Every German word is interactive.
+Every Italian word is interactive.
 
 - **Desktop:** Hover
 - **Mobile:** Tap
 
 **Shows:**
-- German word
+- Italian word
 - English meaning
 
 ---
@@ -376,15 +376,15 @@ Every experience contains:
 
 *Example:*
 
-**Question (German):** Warum hatte der Zug Verspätung?
+**Question (Italian):** Perché il treno ha avuto ritardo?
 **Question (English):** Why was the train delayed?
 
 **Answers:**
-- Schlechtes Wetter (Weather)
-- Technisches Problem (Technical problem) ✓
-- Personalmangel (Staff shortage)
+- Maltempo (Weather)
+- Problema tecnico (Technical problem) ✓
+- Carenza di personale (Staff shortage)
 
-Each word in German text is hoverable/tappable for translation.
+Each word in Italian text is hoverable/tappable for translation.
 English text does not have word entries in the dictionary.
 
 ### Type 2: Matching (1 per experience)
@@ -392,10 +392,10 @@ English text does not have word entries in the dictionary.
 *Example:*
 
 **Match:**
-- Verspätung → Delay
-- Gleis → Platform
+- Ritardo → Delay
+- Binario → Platform
 
-Stored in `question_options` table as German-English pairs. The `correct` boolean field is unused for matching questions.
+Stored in `question_options` table as Italian-English pairs. The `correct` boolean field is unused for matching questions.
 
 ### Type 3: Real Life Challenge (3 tabs always shown)
 
@@ -407,7 +407,7 @@ Stored in `question_options` table as German-English pairs. The `correct` boolea
 
 **Available types:**
 
-- **Best Response** — Choose the most appropriate German response.
+- **Best Response** — Choose the most appropriate Italian response.
 - **Arrange Dialogue** — Put conversation sentences in correct order.
 - **Vocabulary Match** — Match words and meanings.
 
@@ -527,7 +527,7 @@ Future-proofing only.
 
 MVP:
 
-German only.
+Italian only.
 
 Table:
 
@@ -544,7 +544,7 @@ Example:
 
 
 1
-German
+Italian
 de
 
 
@@ -700,7 +700,7 @@ Train cancelled
 
 Transcript supports:
 
-- German text
+- Italian text
 - English translation
 - word interaction
 
@@ -714,15 +714,15 @@ Fields:
 - id
 - experience_id
 - order
-- german_text
+- target_text
 - english_text
 
 
 Example:
 
-German:
+Italian:
 
-"Mein Zug hat Verspätung."
+"Il mio treno ha ritardo."
 
 English:
 
@@ -755,7 +755,7 @@ words
 Fields:
 
 - id
-- german_word
+- target_word
 - english_translation
 - article
 - plural
@@ -764,7 +764,7 @@ Fields:
 Example:
 
 
-die Rechnung
+il conto
 
 Bill
 
@@ -815,7 +815,7 @@ Types (MVP):
 
 MCQ — Uses `question_options` with `correct` boolean
 
-MATCHING — Uses `question_options` as German-English pairs (`correct` field unused)
+MATCHING — Uses `question_options` as Italian-English pairs (`correct` field unused)
 
 
 ---
@@ -832,7 +832,7 @@ Fields:
 
 - id
 - question_id
-- german_text
+- target_text
 - english_text
 - correct (boolean; used for MCQ, unused for MATCHING)
 
@@ -1225,7 +1225,7 @@ Train Delay
 Contains:
 
 
-1. Realistic German dialogue
+1. Realistic Italian dialogue
 
 2. English translation
 
@@ -1258,7 +1258,7 @@ Human review is required before publishing.
 
 Audio generation should focus on:
 
-- natural German voices
+- natural Italian voices
 - realistic speed
 - realistic situations
 
@@ -1338,9 +1338,9 @@ A new user can:
 
 1. Create account
 
-2. Select German level
+2. Select Italian level
 
-3. Choose a Germany scenario
+3. Choose a Italy scenario
 
 4. Complete a realistic listening lesson
 
@@ -1358,7 +1358,7 @@ A new user can:
 The product should make users say:
 
 
-"I can actually use this in Germany."
+"I can actually use this in Italy."
 
 ---
 
@@ -1376,9 +1376,9 @@ These decisions were finalized during schema review and override any earlier amb
 | **modules** | Icons assigned by UI based on title (not stored in DB) |
 | **experiences** | `duration` stored as string ("3:50"), `xp_reward` = 50 |
 | **transcript_lines** | No `speaker` field (MVP simplification) |
-| **words** | Duplicate `german_word` entries allowed with different `english_translation` per context; no `part_of_speech` field |
+| **words** | Duplicate `target_word` entries allowed with different `english_translation` per context; no `part_of_speech` field |
 | **questions** | `type` = `MCQ` or `MATCHING` only. Each experience has 2-3 MCQ + 1 Matching |
-| **question_options** | For MCQ: `correct` boolean indicates right answer. For MATCHING: each row is a German-English pair, `correct` unused |
+| **question_options** | For MCQ: `correct` boolean indicates right answer. For MATCHING: each row is a Italian-English pair, `correct` unused |
 | **challenges** | `instruction` field omitted — UI displays instruction text based on `type`. Each experience has 1 challenge row; the 3 tabs (Best Response / Arrange Dialogue / Vocabulary Match) are UI toggles |
 
 ## User Tables
@@ -1392,10 +1392,10 @@ These decisions were finalized during schema review and override any earlier amb
 ## Per-Experience Structure (Final)
 
 Every experience contains:
-- 1 audio file (generated via edge-tts, German neural voice)
-- 4-6 transcript lines (German + English)
-- 2-3 MCQ questions (bilingual, with hoverable German words)
-- 1 Matching exercise (German-English pairs)
+- 1 audio file (generated via edge-tts, Italian neural voice)
+- 4-6 transcript lines (Italian + English)
+- 2-3 MCQ questions (bilingual, with hoverable Italian words)
+- 1 Matching exercise (Italian-English pairs)
 - 3 Real Life Challenge tabs (all visible, user chooses any one for bonus XP)
 
 # End of CanGo PRD v0.1

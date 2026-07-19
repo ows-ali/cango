@@ -10,7 +10,7 @@ echo ""
 
 # Fetch all experiences that need audio
 EXPERIENCES=$(psql "$DB_URL" -t -A -F',' \
-  "SELECT e.id, e.title, string_agg(t.german_text, ' ' ORDER BY t.order) AS full_text
+  "SELECT e.id, e.title, string_agg(t.target_text, ' ' ORDER BY t.order) AS full_text
    FROM experiences e
    JOIN transcript_lines t ON t.experience_id = e.id
    WHERE e.audio_url IS NULL
@@ -27,14 +27,14 @@ echo "$EXPERIENCES" | while IFS=',' read -r id title text; do
   truncated="${text:0:2800}"
   
   edge-tts \
-    --voice de-DE-KatjaNeural \
+    --voice it-IT-ElsaNeural \
     --text "$truncated" \
     --write-media "public/audio/experience-$id.mp3"
   
   # Also generate a short preview version
   preview="${text:0:300}"
   edge-tts \
-    --voice de-DE-KatjaNeural \
+    --voice it-IT-ElsaNeural \
     --text "$preview" \
     --write-media "public/audio/experience-$id-preview.mp3"
     

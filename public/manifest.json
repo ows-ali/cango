@@ -1,7 +1,7 @@
 {
-  "name": "CanGo — Learn German for Real Life",
+  "name": "CanGo — Learn Italian for Real Life",
   "short_name": "CanGo",
-  "description": "Practice realistic German scenarios for life in Germany",
+  "description": "Practice realistic Italian scenarios for life in Italy",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -21,7 +21,10 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "language"],
-  "lang": "en",
+  "categories": [
+    "education",
+    "language"
+  ],
+  "lang": "it",
   "dir": "ltr"
 }

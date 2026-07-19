@@ -1,7 +1,7 @@
-# CanGo — Learn German for Real Life
+# CanGo — Learn Italian for Real Life
 
 **CanGo** is a modern, AI-powered Progressive Web App (PWA) that teaches
-German through realistic, scenario-based conversations. Built on a
+Italian through realistic, scenario-based conversations. Built on a
 modern AI stack — Next.js 16, TypeScript, Tailwind CSS v4, Drizzle ORM,
 NextAuth.js, and Supabase — with offline-first support via IndexedDB and
 speech synthesis for authentic pronunciation practice.
@@ -35,7 +35,7 @@ speech synthesis for authentic pronunciation practice.
 - Adaptive CEFR levels (A2 → B1 → B2)
 - Interactive challenges: MCQs, matching, dialogue ordering, best-response
 - PWA: installable with offline support via service worker
-- Speech synthesis for German pronunciation practice
+- Speech synthesis for Italian pronunciation practice
 - Streak tracking and XP rewards
 - Supabase + NextAuth credentials authentication
 

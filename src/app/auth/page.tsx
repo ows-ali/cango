@@ -51,7 +51,7 @@ export default function AuthPage() {
                 {mode === "signup" ? "Create your account" : "Welcome back"}
               </h2>
               <p className="text-on-surface-variant" style={{ fontFamily: "Inter, sans-serif", fontSize: "16px", lineHeight: "24px" }}>
-                {mode === "signup" ? "Unlock your linguistic potential today." : "Continue your German journey."}
+                {mode === "signup" ? "Unlock your linguistic potential today." : "Continue your Italian journey."}
               </p>
             </div>
 

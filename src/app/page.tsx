@@ -73,10 +73,10 @@ export default function WelcomePage() {
 
       <div className="relative z-30 flex flex-col items-center justify-center px-6 text-center max-w-3xl mx-auto flex-grow animate-fade-in" style={{ animationDelay: "0.5s" }}>
         <h1 className="font-headline text-4xl md:text-5xl text-white mb-6 tracking-tight drop-shadow-lg">
-          Learn German for Real Life in Germany
+          Learn Italian for Real Life in Italy
         </h1>
         <p className="text-lg text-white/95 max-w-xl mx-auto drop-shadow-md">
-          Practice realistic scenarios you will actually face. Built for professionals and students in Germany.
+          Practice realistic scenarios you will actually face. Built for professionals and students in Italy.
         </p>
       </div>
 

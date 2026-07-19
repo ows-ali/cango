@@ -55,8 +55,8 @@ export default function HomePage() {
         <InstallPrompt />
 
         <section className="mb-8">
-          <h1 className="font-headline text-3xl md:text-4xl text-on-surface mb-1">Guten Morgen!</h1>
-          <p className="text-lg text-on-surface mb-3">Ready to master your next Germany experience today?</p>
+          <h1 className="font-headline text-3xl md:text-4xl text-on-surface mb-1">Buongiorno!</h1>
+          <p className="text-lg text-on-surface mb-3">Ready to master your next Italy experience today?</p>
           <p className="text-sm italic underline text-on-surface">Our no experience is locked and never will be.</p>
         </section>
 
@@ -81,9 +81,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* My Germany */}
+        {/* My Italy */}
         <section className="flex flex-col gap-6">
-          <h3 className="font-headline text-2xl text-on-surface">My Germany</h3>
+          <h3 className="font-headline text-2xl text-on-surface">My Italy</h3>
 
           {!loaded && scenarios.length === 0 && (
             <div className="flex flex-col gap-6 animate-pulse">

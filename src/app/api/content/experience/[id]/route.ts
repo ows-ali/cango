@@ -33,8 +33,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (error) throw error;
     vocabWords = (data ?? []).map((w) => ({
       id: w.id,
-      germanWord: w.german_word,
-      englishTranslation: w.english_translation,
+      targetWord: w.target_word,
+      translationText: w.translation_text,
       article: w.article,
       plural: w.plural,
     }));
@@ -52,13 +52,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         experienceId: q.experience_id,
         type: q.type,
         questionText: q.question_text,
-        englishTranslation: q.english_translation,
+        translationText: q.translation_text,
         order: q.order,
         options: (options ?? []).map((o) => ({
           id: o.id,
           questionId: o.question_id,
-          germanText: o.german_text,
-          englishText: o.english_text,
+          targetText: o.target_text,
+          translationText: o.translation_text,
           correct: o.correct,
         })),
       };
@@ -78,7 +78,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         experienceId: ch.experience_id,
         type: ch.type,
         question: ch.question,
-        questionEnglish: ch.question_english,
+        questionTranslation: ch.question_translation,
         items: (items ?? []).map((i) => ({
           id: i.id,
           challengeId: i.challenge_id,
@@ -105,8 +105,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       id: t.id,
       experienceId: t.experience_id,
       order: t.order,
-      germanText: t.german_text,
-      englishText: t.english_text,
+      targetText: t.target_text,
+      translationText: t.translation_text,
     })),
     questions: questionsWithOptions,
     challenges: challengesWithItems,

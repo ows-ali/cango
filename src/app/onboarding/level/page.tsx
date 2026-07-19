@@ -46,7 +46,7 @@ export default function LevelPage() {
         <div className="max-w-[600px] w-full space-y-12">
           <div className="text-center space-y-4">
             <h1 className="text-3xl md:text-5xl text-on-surface font-bold" style={{ fontFamily: "Manrope, sans-serif", letterSpacing: "-0.02em" }}>
-              Choose your German Level
+              Choose your Italian Level
             </h1>
             <p className="text-on-surface-variant max-w-md mx-auto" style={{ fontFamily: "Inter, sans-serif", fontSize: "16px", lineHeight: "24px" }}>
               Select the proficiency that best describes your current language skills to personalize your experience.

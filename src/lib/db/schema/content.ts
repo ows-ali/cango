@@ -54,14 +54,14 @@ export const transcriptLines = pgTable("transcript_lines", {
   id: serial("id").primaryKey(),
   experienceId: integer("experience_id").notNull().references(() => experiences.id),
   order: integer("order").notNull().default(0),
-  germanText: text("german_text").notNull(),
-  englishText: text("english_text").notNull(),
+  targetText: text("target_text").notNull(),
+  translationText: text("translation_text").notNull(),
 });
 
 export const words = pgTable("words", {
   id: serial("id").primaryKey(),
-  germanWord: varchar("german_word", { length: 200 }).notNull(),
-  englishTranslation: varchar("english_translation", { length: 200 }).notNull(),
+  targetWord: varchar("target_word", { length: 200 }).notNull(),
+  translationText: varchar("translation_text", { length: 200 }).notNull(),
   article: varchar("article", { length: 20 }),
   plural: varchar("plural", { length: 100 }),
 });
@@ -78,15 +78,15 @@ export const questions = pgTable("questions", {
   experienceId: integer("experience_id").notNull().references(() => experiences.id),
   type: varchar("type", { length: 20 }).notNull().$type<"MCQ" | "MATCHING">(),
   questionText: text("question_text").notNull(),
-  englishTranslation: text("english_translation"),
+  translationText: text("translation_text"),
   order: integer("order").notNull().default(0),
 });
 
 export const questionOptions = pgTable("question_options", {
   id: serial("id").primaryKey(),
   questionId: integer("question_id").notNull().references(() => questions.id),
-  germanText: text("german_text").notNull(),
-  englishText: text("english_text").notNull(),
+  targetText: text("target_text").notNull(),
+  translationText: text("translation_text").notNull(),
   correct: boolean("correct").default(false),
 });
 
@@ -95,7 +95,7 @@ export const challenges = pgTable("challenges", {
   experienceId: integer("experience_id").notNull().references(() => experiences.id),
   type: varchar("type", { length: 20 }).notNull().$type<"BEST_RESPONSE" | "ARRANGE_DIALOGUE" | "VOCAB_MATCH">(),
   question: text("question"),
-  questionEnglish: text("question_english"),
+  questionTranslation: text("question_translation"),
 });
 
 export const challengeItems = pgTable("challenge_items", {

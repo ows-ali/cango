@@ -7,16 +7,16 @@ import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
 
 interface TranscriptLine {
-  id: number; germanText: string; englishText: string;
+  id: number; targetText: string; translationText: string;
 }
 
 interface QuestionOption {
-  id: number; germanText: string; englishText: string; correct: boolean;
+  id: number; targetText: string; translationText: string; correct: boolean;
 }
 
 interface Question {
   id: number; type: "MCQ" | "MATCHING"; questionText: string;
-  englishTranslation: string | null; options: QuestionOption[];
+  translationText: string | null; options: QuestionOption[];
 }
 
 interface ChallengeItem {
@@ -24,7 +24,7 @@ interface ChallengeItem {
 }
 
 interface Challenge {
-  id: number; type: string; items: ChallengeItem[]; question?: string; questionEnglish?: string;
+  id: number; type: string; items: ChallengeItem[]; question?: string; questionTranslation?: string;
 }
 
 interface ExperienceData {
@@ -59,10 +59,10 @@ export default function ExperiencePlayerPage() {
   const [mcqSelected, setMcqSelected] = useState<Record<number, number | null>>({});
 
   // Matching
-  const [matchingPairs, setMatchingPairs] = useState<{ german: string; english: string; matched: boolean }[]>([]);
-  const [matchShuffledGerman, setMatchShuffledGerman] = useState<string[]>([]);
+  const [matchingPairs, setMatchingPairs] = useState<{ targetText: string; translationText: string; matched: boolean }[]>([]);
+  const [matchShuffledTarget, setMatchShuffledTarget] = useState<string[]>([]);
   const [matchShuffledEnglish, setMatchShuffledEnglish] = useState<string[]>([]);
-  const [matchSelectedGerman, setMatchSelectedGerman] = useState<string | null>(null);
+  const [matchSelectedTarget, setMatchSelectedTarget] = useState<string | null>(null);
   const [matchWrong, setMatchWrong] = useState(false);
 
   const [xpEarned, setXpEarned] = useState(false);
@@ -102,12 +102,12 @@ export default function ExperiencePlayerPage() {
       setData(d);
       const matching = d.questions?.find((q: Question) => q.type === "MATCHING");
       if (matching) {
-        const pairs = matching.options.map((o: QuestionOption) => ({ german: o.germanText, english: o.englishText, matched: false }));
+        const pairs = matching.options.map((o: QuestionOption) => ({ targetText: o.targetText, translationText: o.translationText, matched: false }));
         setMatchingPairs(pairs);
-        // Shuffle German and English independently
-        const de = pairs.map((p: { german: string; english: string; matched: boolean }) => p.german).sort(() => Math.random() - 0.5);
-        const en = pairs.map((p: { german: string; english: string; matched: boolean }) => p.english).sort(() => Math.random() - 0.5);
-        setMatchShuffledGerman(de);
+        // Shuffle target and translation independently
+        const de = pairs.map((p: { targetText: string; translationText: string; matched: boolean }) => p.targetText).sort(() => Math.random() - 0.5);
+        const en = pairs.map((p: { targetText: string; translationText: string; matched: boolean }) => p.translationText).sort(() => Math.random() - 0.5);
+        setMatchShuffledTarget(de);
         setMatchShuffledEnglish(en);
       }
       const vocabChal = d.challenges?.find((c: Challenge) => c.type === "VOCAB_MATCH");
@@ -159,10 +159,10 @@ export default function ExperiencePlayerPage() {
       setIsPlaying(false);
       return;
     }
-    const text = data.transcripts.map((t) => t.germanText).join(" ");
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "de-DE";
+      const text = data.transcripts.map((t) => t.targetText).join(" ");
+      if ("speechSynthesis" in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "it-IT";
       utterance.rate = 0.85;
       utterance.onend = () => setIsPlaying(false);
       speechSynthesis.cancel();
@@ -232,23 +232,23 @@ export default function ExperiencePlayerPage() {
     if (isCorrect) setMcqCorrect((prev) => ({ ...prev, [qId]: true }));
   }
 
-  function handleMatchingGermanSelect(german: string) {
-    if (matchingPairs.find((p) => p.german === german)?.matched) return;
-    setMatchSelectedGerman(german);
+  function handleMatchingTargetSelect(targetText: string) {
+    if (matchingPairs.find((p) => p.targetText === targetText)?.matched) return;
+    setMatchSelectedTarget(targetText);
     setMatchWrong(false);
   }
 
   function handleMatchingEnglishSelect(english: string) {
-    if (!matchSelectedGerman) return;
-    const pair = matchingPairs.find((p) => p.german === matchSelectedGerman);
+    if (!matchSelectedTarget) return;
+    const pair = matchingPairs.find((p) => p.targetText === matchSelectedTarget);
     if (!pair || pair.matched) return;
-    if (pair.english === english) {
-      setMatchingPairs((prev) => prev.map((p) => p.german === matchSelectedGerman ? { ...p, matched: true } : p));
-      setMatchSelectedGerman(null);
+    if (pair.translationText === english) {
+      setMatchingPairs((prev) => prev.map((p) => p.targetText === matchSelectedTarget ? { ...p, matched: true } : p));
+      setMatchSelectedTarget(null);
       setMatchWrong(false);
     } else {
       setMatchWrong(true);
-      setMatchSelectedGerman(null);
+      setMatchSelectedTarget(null);
       setTimeout(() => setMatchWrong(false), 600);
     }
   }
@@ -364,8 +364,8 @@ export default function ExperiencePlayerPage() {
               <div className="space-y-4">
                 {data.transcripts.map((line) => (
                   <div key={line.id} className="p-3 rounded-lg hover:bg-surface-container-low transition-colors">
-                    <p className="text-base text-on-surface leading-relaxed">{line.germanText}</p>
-                    {showTranslation && <p className="text-sm text-on-surface-variant mt-1">{line.englishText}</p>}
+                    <p className="text-base text-on-surface leading-relaxed">{line.targetText}</p>
+                    {showTranslation && <p className="text-sm text-on-surface-variant mt-1">{line.translationText}</p>}
                   </div>
                 ))}
               </div>
@@ -388,7 +388,7 @@ export default function ExperiencePlayerPage() {
                   </button>
                   <div>
                     <p className="font-medium text-on-surface">{q.questionText}</p>
-                    {q.englishTranslation && <p className="text-sm text-on-surface-variant">{q.englishTranslation}</p>}
+                    {q.translationText && <p className="text-sm text-on-surface-variant">{q.translationText}</p>}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -408,8 +408,8 @@ export default function ExperiencePlayerPage() {
                           {String.fromCharCode(65 + oi)}
                         </div>
                         <div className="flex-1">
-                          <span className="text-sm font-medium">{opt.germanText}</span>
-                          <span className="text-xs text-on-surface-variant ml-2">({opt.englishText})</span>
+                          <span className="text-sm font-medium">{opt.targetText}</span>
+                          <span className="text-xs text-on-surface-variant ml-2">({opt.translationText})</span>
                         </div>
                         {isAnsweredCorrectly && isCorrectOpt && (
                           <span className="material-symbols-outlined text-green-600" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -427,24 +427,24 @@ export default function ExperiencePlayerPage() {
                 <h4 className="text-xs text-on-surface-variant uppercase tracking-wider mb-4 font-semibold">Vocabulary Match</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    {matchShuffledGerman.map((german) => {
-                      const pair = matchingPairs.find((p) => p.german === german);
-                      const isSelected = matchSelectedGerman === german;
+                    {matchShuffledTarget.map((targetText) => {
+                      const pair = matchingPairs.find((p) => p.targetText === targetText);
+                      const isSelected = matchSelectedTarget === targetText;
                       return (
                         <button
-                          key={german}
-                          onClick={() => handleMatchingGermanSelect(german)}
+                          key={targetText}
+                          onClick={() => handleMatchingTargetSelect(targetText)}
                           className={`w-full p-3 rounded-lg border text-left text-sm transition-colors ${pair?.matched ? "border-green-500 bg-green-50 text-green-800" : isSelected ? "border-primary bg-primary/5" : "border-outline-variant bg-white hover:border-primary"}`}
                         >
-                          {german}
+                          {targetText}
                         </button>
                       );
                     })}
                   </div>
                   <div className="space-y-2">
                     {matchShuffledEnglish.map((english) => {
-                      const pair = matchingPairs.find((p) => p.english === english);
-                      const isWrong = matchWrong && matchSelectedGerman === null && pair && !pair.matched;
+                      const pair = matchingPairs.find((p) => p.translationText === english);
+                      const isWrong = matchWrong && matchSelectedTarget === null && pair && !pair.matched;
                       return (
                         <button
                           key={english}
@@ -580,8 +580,8 @@ export default function ExperiencePlayerPage() {
                     {bestChallenge.question && (
                       <div className="bg-surface-container-low rounded-xl p-4 mb-3 border border-outline-variant/30">
                         <p className="text-sm font-medium text-on-surface">{bestChallenge.question}</p>
-                        {bestChallenge.questionEnglish && (
-                          <p className="text-xs text-on-surface-variant mt-1">{bestChallenge.questionEnglish}</p>
+                        {bestChallenge.questionTranslation && (
+                          <p className="text-xs text-on-surface-variant mt-1">{bestChallenge.questionTranslation}</p>
                         )}
                       </div>
                     )}

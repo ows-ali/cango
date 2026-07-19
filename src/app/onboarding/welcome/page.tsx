@@ -11,7 +11,7 @@ export default function WelcomePage() {
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-primary/20 z-10" />
         <div className="absolute inset-0 z-20" style={{ background: "radial-gradient(circle, transparent 30%, rgba(9, 20, 38, 0.6) 100%)" }} />
-        <img alt="Life in Germany" src="/images/onboarding-bg.jpg" className="w-full h-full object-cover" />
+        <img alt="Life in Italy" src="/images/onboarding-bg.jpg" className="w-full h-full object-cover" />
       </div>
 
       <header className="relative z-30 pt-12 px-4 md:px-16 flex justify-center w-full" style={{ animation: "fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards" }}>
@@ -20,10 +20,10 @@ export default function WelcomePage() {
 
       <div className="relative z-30 flex flex-col items-center justify-center px-6 text-center max-w-3xl mx-auto flex-grow" style={{ animation: "fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both" }}>
         <h1 className="text-3xl md:text-5xl text-white mb-6 tracking-tight drop-shadow-lg font-bold" style={{ fontFamily: "Manrope, sans-serif", letterSpacing: "-0.02em" }}>
-          Learn German for Real Life in Germany
+          Learn Italian for Real Life in Italy
         </h1>
         <p className="text-lg md:text-xl text-white/95 max-w-xl mx-auto drop-shadow-md">
-          Practice realistic scenarios you will actually face. Built for professionals and students in Germany.
+          Esercitati con scenari realistici che affronti davvero. Pensato per professionisti e studenti in Italia.
         </p>
       </div>
 

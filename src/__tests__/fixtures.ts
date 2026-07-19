@@ -21,7 +21,7 @@ export const MOCK_SCENARIOS: ScenarioFixture[] = [
     id: 1,
     slug: "transportation",
     name: "Transportation",
-    description: "Navigate public transport in Germany",
+    description: "Navigate public transport in Italy",
     imageUrl: null,
     order: 1,
     levels: [
@@ -41,19 +41,19 @@ export const MOCK_SCENARIOS: ScenarioFixture[] = [
                 xpReward: 50,
                 order: 1,
                 transcripts: [
-                  { id: 1000, germanText: "Guten Tag, ich möchte eine Fahrkarte kaufen.", englishText: "Good day, I would like to buy a ticket.", order: 1 },
+                  { id: 1000, targetText: "Buongiorno, vorrei comprare un biglietto.", translationText: "Good day, I would like to buy a ticket.", order: 1 },
                 ],
                 questions: [
                   {
                     id: 10000,
                     type: "MCQ",
-                    questionText: 'What does "Fahrkarte" mean?',
-                    englishTranslation: null,
+                    questionText: 'Che cosa significa "biglietto"?',
+                    translationText: null,
                     order: 1,
                     options: [
-                      { id: 100000, germanText: "Ticket", englishText: "Ticket", correct: true },
-                      { id: 100001, germanText: "Food", englishText: "Food", correct: false },
-                      { id: 100002, germanText: "Map", englishText: "Map", correct: false },
+                      { id: 100000, targetText: "Biglietto", translationText: "Ticket", correct: true },
+                      { id: 100001, targetText: "Cibo", translationText: "Food", correct: false },
+                      { id: 100002, targetText: "Mappa", translationText: "Map", correct: false },
                     ],
                   },
                 ],
@@ -62,8 +62,8 @@ export const MOCK_SCENARIOS: ScenarioFixture[] = [
                     id: 1000,
                     type: "VOCAB_MATCH",
                     items: [
-                      { id: 10000, text: "die Fahrkarte", translation: "the ticket", order: 1, correctValue: "ticket" },
-                      { id: 10001, text: "der Bahnhof", translation: "the train station", order: 2, correctValue: "station" },
+                      { id: 10000, text: "il biglietto", translation: "the ticket", order: 1, correctValue: "ticket" },
+                      { id: 10001, text: "la stazione", translation: "the train station", order: 2, correctValue: "station" },
                     ],
                   },
                 ],
@@ -157,7 +157,7 @@ export const MOCK_SCENARIOS: ScenarioFixture[] = [
     id: 3,
     slug: "job-interview",
     name: "Job Interview",
-    description: "Prepare for job interviews in German",
+    description: "Prepare for job interviews in Italian",
     imageUrl: null,
     order: 3,
     levels: [
@@ -213,14 +213,14 @@ export interface ExperienceFixture {
   duration: string | null;
   xpReward: number;
   order: number;
-  transcripts: { id: number; germanText: string; englishText: string; order: number }[];
+  transcripts: { id: number; targetText: string; translationText: string; order: number }[];
   questions: {
     id: number;
     type: string;
     questionText: string;
-    englishTranslation: string | null;
+    translationText: string | null;
     order: number;
-    options: { id: number; germanText: string; englishText: string; correct: boolean }[];
+    options: { id: number; targetText: string; translationText: string; correct: boolean }[];
   }[];
   challenges: {
     id: number;

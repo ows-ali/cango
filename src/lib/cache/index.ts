@@ -32,8 +32,8 @@ export interface CachedTranscriptLine {
   id: number;
   experienceId: number;
   order: number;
-  germanText: string;
-  englishText: string;
+  targetText: string;
+  translationText: string;
 }
 
 export interface CachedQuestion {
@@ -41,15 +41,15 @@ export interface CachedQuestion {
   experienceId: number;
   type: "MCQ" | "MATCHING";
   questionText: string;
-  englishTranslation: string | null;
+  translationText: string | null;
   order: number;
 }
 
 export interface CachedQuestionOption {
   id: number;
   questionId: number;
-  germanText: string;
-  englishText: string;
+  targetText: string;
+  translationText: string;
   correct: boolean;
 }
 

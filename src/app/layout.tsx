@@ -5,8 +5,8 @@ import { PwaRegister } from "@/components/PwaRegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CanGo — Learn German for Real Life",
-  description: "Practice realistic German scenarios for life in Germany",
+  title: "CanGo — Learn Italian for Real Life",
+  description: "Practice realistic Italian scenarios for life in Italy",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
