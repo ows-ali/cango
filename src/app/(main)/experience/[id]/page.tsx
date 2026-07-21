@@ -7,7 +7,7 @@ import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
 
 interface TranscriptLine {
-  id: number; targetText: string; translationText: string;
+  id: number; targetText: string; translationText: string; speaker: string | null;
 }
 
 interface QuestionOption {
@@ -73,6 +73,19 @@ export default function ExperiencePlayerPage() {
   const [bonusDone, setBonusDone] = useState(false);
   const [progress, setProgress] = useState<{ completed: boolean; lessonXpClaimed: boolean; bonusXpClaimed: boolean } | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
+  const italianVoices = useRef<SpeechSynthesisVoice[]>([]);
+  const femaleRoles = ["ticket_agent", "shop_assistant", "doctor", "receptionist", "waiter", "nurse", "pharmacist"];
+
+  useEffect(() => {
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    if (italianVoices.current.length > 0 || !("speechSynthesis" in window)) return;
+    const load = () => {
+      italianVoices.current = speechSynthesis.getVoices().filter((v) => v.lang.startsWith("it"));
+    };
+    load();
+    speechSynthesis.onvoiceschanged = load;
+    return () => { if ("speechSynthesis" in window) speechSynthesis.cancel(); };
+  }, []);
 
   // Challenge tab state
   const [activeTab, setActiveTab] = useState(0);
@@ -152,6 +165,40 @@ export default function ExperiencePlayerPage() {
     }
   }, [data]);
 
+  function getVoiceForSpeaker(speaker: string | null): SpeechSynthesisVoice | null {
+    const voices = italianVoices.current;
+    if (voices.length === 0) return null;
+    if (!speaker) return voices[0];
+    const idx = femaleRoles.includes(speaker) ? 0 : Math.min(1, voices.length - 1);
+    return voices[idx] ?? voices[0];
+  }
+
+  function speakerLabel(speaker: string): string {
+    const labels: Record<string, string> = {
+      passenger: "Passeggero", ticket_agent: "Bigliettaio",
+      customer: "Cliente", shop_assistant: "Commesso",
+      patient: "Paziente", doctor: "Dottore",
+      receptionist: "Receptionist", waiter: "Cameriere",
+      nurse: "Infermiere", pharmacist: "Farmacista",
+      guest: "Ospite", friend: "Amico",
+      colleague: "Collega", interviewer: "Interviewer",
+    };
+    return labels[speaker] ?? speaker;
+  }
+
+  function speakTranscript(index: number) {
+    if (!data || index >= data.transcripts.length) { setIsPlaying(false); return; }
+    const line = data.transcripts[index];
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(line.targetText);
+    utterance.lang = "it-IT";
+    utterance.rate = 0.85;
+    const voice = getVoiceForSpeaker(line.speaker);
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => speakTranscript(index + 1);
+    speechSynthesis.speak(utterance);
+  }
+
   const togglePlay = useCallback(() => {
     if (!data) return;
     if (isPlaying) {
@@ -159,16 +206,9 @@ export default function ExperiencePlayerPage() {
       setIsPlaying(false);
       return;
     }
-      const text = data.transcripts.map((t) => t.targetText).join(" ");
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "it-IT";
-      utterance.rate = 0.85;
-      utterance.onend = () => setIsPlaying(false);
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utterance);
-      setIsPlaying(true);
-    }
+    speechSynthesis.cancel();
+    speakTranscript(0);
+    setIsPlaying(true);
   }, [data, isPlaying]);
 
   // Per-tab completion (derived before early return so hooks stay ordered)
@@ -364,6 +404,7 @@ export default function ExperiencePlayerPage() {
               <div className="space-y-4">
                 {data.transcripts.map((line) => (
                   <div key={line.id} className="p-3 rounded-lg hover:bg-surface-container-low transition-colors">
+                    {line.speaker && <span className="text-xs font-semibold text-primary mb-0.5 block">{speakerLabel(line.speaker)}</span>}
                     <p className="text-base text-on-surface leading-relaxed">{line.targetText}</p>
                     {showTranslation && <p className="text-sm text-on-surface-variant mt-1">{line.translationText}</p>}
                   </div>

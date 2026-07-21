@@ -34,6 +34,7 @@ export interface CachedTranscriptLine {
   order: number;
   targetText: string;
   translationText: string;
+  speaker: string | null;
 }
 
 export interface CachedQuestion {

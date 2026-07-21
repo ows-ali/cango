@@ -41,7 +41,7 @@ export const MOCK_SCENARIOS: ScenarioFixture[] = [
                 xpReward: 50,
                 order: 1,
                 transcripts: [
-                  { id: 1000, targetText: "Buongiorno, vorrei comprare un biglietto.", translationText: "Good day, I would like to buy a ticket.", order: 1 },
+                  { id: 1000, targetText: "Buongiorno, vorrei comprare un biglietto.", translationText: "Good day, I would like to buy a ticket.", order: 1, speaker: "passenger" },
                 ],
                 questions: [
                   {
@@ -213,7 +213,7 @@ export interface ExperienceFixture {
   duration: string | null;
   xpReward: number;
   order: number;
-  transcripts: { id: number; targetText: string; translationText: string; order: number }[];
+  transcripts: { id: number; targetText: string; translationText: string; order: number; speaker: string | null }[];
   questions: {
     id: number;
     type: string;

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { Logo } from "@/components/Logo";
 
 const LEVELS = [
+  { id: "A1", name: "Beginner", desc: "Can understand basic phrases and everyday expressions." },
   { id: "A2", name: "Pre-Intermediate", desc: "Can understand sentences and frequently used expressions." },
   { id: "B1", name: "Intermediate", desc: "Can deal with most situations likely to arise while travelling." },
   { id: "B2", name: "Upper Intermediate", desc: "Can interact with a degree of fluency and spontaneity." },

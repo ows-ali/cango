@@ -12,10 +12,11 @@ interface Scenario {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  levels?: { level: { id: number; name: string } }[];
 }
 
-const LEVEL_MAP: Record<string, number> = { A2: 1, B1: 2, B2: 3 };
-const REVERSE_LEVEL_MAP: Record<number, string> = { 1: "A2", 2: "B1", 3: "B2" };
+const LEVEL_MAP: Record<string, number> = { A1: 4, A2: 1, B1: 2, B2: 3 };
+const REVERSE_LEVEL_MAP: Record<number, string> = { 4: "A1", 1: "A2", 2: "B1", 3: "B2" };
 const HERO_IMAGES: Record<string, string> = {
   transportation: "/images/scenario-transportation.jpg",
   doctor: "/images/scenario-doctor.jpg",
@@ -105,8 +106,26 @@ export default function HomePage() {
                 <div className="h-40 relative overflow-hidden">
                   <img src={HERO_IMAGES[s.slug] || "/images/onboarding-bg.jpg"} alt={s.name} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                  <div className="absolute top-3 left-3 bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-primary border border-surface-container">
-                    {scenarioLevels[s.id] || userLevel}
+                  <div className="absolute top-3 left-3 flex gap-1">
+                    {(["A1", "A2", "B1", "B2"] as const).map((lvl) => {
+                      const levelNum = LEVEL_MAP[lvl];
+                      const hasLevel = s.levels?.some((sl) => sl.level.id === levelNum);
+                      const isActive = (scenarioLevels[s.id] || userLevel) === lvl;
+                      return (
+                        <span
+                          key={lvl}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                            !hasLevel
+                              ? "bg-gray-100 text-gray-400 border-gray-200 line-through"
+                              : isActive
+                                ? "bg-primary text-white border-primary"
+                                : "bg-white/80 text-on-surface-variant border-outline-variant"
+                          }`}
+                        >
+                          {lvl}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="p-4">

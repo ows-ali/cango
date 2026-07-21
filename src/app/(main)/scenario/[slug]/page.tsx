@@ -29,7 +29,7 @@ interface ScenarioData {
   }[];
 }
 
-const LEVEL_MAP: Record<string, number> = { A2: 1, B1: 2, B2: 3 };
+const LEVEL_MAP: Record<string, number> = { A1: 4, A2: 1, B1: 2, B2: 3 };
 const HERO_IMAGES: Record<string, string> = {
   transportation: "/images/scenario-transportation.jpg",
   doctor: "/images/scenario-doctor.jpg",

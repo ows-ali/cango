@@ -107,6 +107,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       order: t.order,
       targetText: t.target_text,
       translationText: t.translation_text,
+      speaker: t.speaker,
     })),
     questions: questionsWithOptions,
     challenges: challengesWithItems,
