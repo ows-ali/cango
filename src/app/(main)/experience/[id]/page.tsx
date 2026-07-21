@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
+import { ChatUI } from "@/components/ChatUI";
 
 interface TranscriptLine {
   id: number; targetText: string; translationText: string; speaker: string | null;
@@ -32,11 +33,12 @@ interface ExperienceData {
   transcripts: TranscriptLine[]; questions: Question[]; challenges: Challenge[];
 }
 
-const CHALLENGE_TABS = ["VOCAB_MATCH", "ARRANGE_DIALOGUE", "BEST_RESPONSE"] as const;
+const CHALLENGE_TABS = ["VOCAB_MATCH", "ARRANGE_DIALOGUE", "BEST_RESPONSE", "AI_CHAT"] as const;
 const TAB_LABELS: Record<string, string> = {
   VOCAB_MATCH: "Match",
   ARRANGE_DIALOGUE: "Arrange Dialogue",
   BEST_RESPONSE: "Best Response",
+  AI_CHAT: "AI Chat",
 };
 
 function shuffle<T>(arr: T[]): T[] {
@@ -72,6 +74,9 @@ export default function ExperiencePlayerPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [bonusDone, setBonusDone] = useState(false);
   const [progress, setProgress] = useState<{ completed: boolean; lessonXpClaimed: boolean; bonusXpClaimed: boolean } | null>(null);
+  const [vocabWords, setVocabWords] = useState<{ id: number; targetWord: string; translationText: string }[]>([]);
+  const [selectedWordIds, setSelectedWordIds] = useState<Set<number>>(new Set());
+  const [addingVocab, setAddingVocab] = useState(false);
   const waveformRef = useRef<HTMLDivElement>(null);
   const italianVoices = useRef<SpeechSynthesisVoice[]>([]);
   const femaleRoles = ["ticket_agent", "shop_assistant", "doctor", "receptionist", "waiter", "nurse", "pharmacist"];
@@ -318,27 +323,88 @@ export default function ExperiencePlayerPage() {
       setXpEarned(earned > 0);
       setCompleted(true);
       refreshStats();
+      fetch(`/api/content/experience/${id}`).then((r) => r.json()).then((d) => {
+        if (d?.vocabulary?.length) setVocabWords(d.vocabulary);
+      }).catch(() => {});
     }).catch(() => setCompleting(false));
   }
 
+  const handleAddVocab = async () => {
+    if (selectedWordIds.size === 0) { router.push("/home"); return; }
+    setAddingVocab(true);
+    try {
+      await fetch("/api/vocabulary/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wordIds: [...selectedWordIds] }),
+      });
+    } catch {}
+    router.push("/home");
+  };
+
   if (completed) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-margin-mobile">
-        <div className="text-center max-w-sm">
+      <div className="min-h-screen bg-background flex items-center justify-center px-margin-mobile py-12">
+        <div className="text-center max-w-sm w-full">
           <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-4xl text-white">check</span>
           </div>
           <h2 className="font-headline text-3xl text-on-surface mb-2">Completed!</h2>
           <p className="text-2xl font-bold text-primary mb-2">+{xpThisSession} XP</p>
-          <p className="text-on-surface-variant mb-8">
+          <p className="text-on-surface-variant mb-2">
             {xpThisSession === 70 ? "Great job with bonus!"
               : xpThisSession === 50 ? "Great job!"
                 : xpThisSession === 20 ? "Bonus claimed!"
                   : "Reviewing"}
           </p>
-          <button onClick={() => router.push("/home")} className="bg-primary text-on-primary px-8 py-3 rounded-lg font-semibold w-full">
-            Back to Home
-          </button>
+
+          {vocabWords.length > 0 && (
+            <div className="bg-white rounded-2xl border border-outline-variant/30 p-5 text-left mt-6 mb-6 shadow-sm">
+              <h3 className="font-bold text-on-surface mb-1">Add words to your vocabulary</h3>
+              <p className="text-xs text-on-surface-variant mb-4">Select words you want to practice later:</p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {vocabWords.map((vw) => (
+                  <label key={vw.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={selectedWordIds.has(vw.id)}
+                      onChange={() => {
+                        setSelectedWordIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(vw.id)) next.delete(vw.id);
+                          else next.add(vw.id);
+                          return next;
+                        });
+                      }}
+                      className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-on-surface">{vw.targetWord}</p>
+                      <p className="text-xs text-on-surface-variant">{vw.translationText}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push("/home")}
+              className="flex-1 border border-outline-variant text-on-surface px-5 py-3 rounded-xl font-medium text-sm hover:bg-surface-container-high transition-colors"
+            >
+              {vocabWords.length > 0 ? "Skip" : "Back to Home"}
+            </button>
+            {vocabWords.length > 0 && (
+              <button
+                onClick={handleAddVocab}
+                disabled={addingVocab}
+                className="flex-1 bg-primary text-on-primary px-5 py-3 rounded-xl font-semibold text-sm shadow-sm hover:bg-primary-container transition-colors disabled:opacity-50"
+              >
+                {addingVocab ? "Adding..." : `Add Selected (${selectedWordIds.size})`}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -389,10 +455,10 @@ export default function ExperiencePlayerPage() {
           </div>
         </section>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Transcript Column */}
-          <section className="lg:col-span-7 space-y-6">
+        {/* Content Stack */}
+        <div className="flex flex-col gap-6">
+          {/* Transcript */}
+          <section className="space-y-6">
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/30">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-headline text-xl text-on-surface">Transcript</h3>
@@ -413,8 +479,8 @@ export default function ExperiencePlayerPage() {
             </div>
           </section>
 
-          {/* Practice Column */}
-          <aside className="lg:col-span-5 space-y-6">
+          {/* Practice */}
+          <section className="space-y-6">
             <div className="flex items-center gap-2">
               <span className="w-2 h-8 bg-primary rounded-full" />
               <h3 className="font-headline text-xl text-on-surface">Practice</h3>
@@ -500,7 +566,7 @@ export default function ExperiencePlayerPage() {
                 </div>
               </div>
             )}
-          </aside>
+          </section>
         </div>
 
         {/* Bonus Challenge Section - placed after Practice, before Complete button */}
@@ -646,6 +712,16 @@ export default function ExperiencePlayerPage() {
                     )}
                   </>
                 )}
+              </div>
+            )}
+
+            {activeTab === 3 && (
+              <div className="min-h-[300px]">
+                <ChatUI
+                  context={{ experienceId: data.id }}
+                  welcomeMessage={`Let's practice this dialogue! I'll be the other speaker — try replying in Italian.`}
+                  placeholder="Type your response in Italian..."
+                />
               </div>
             )}
           </div>

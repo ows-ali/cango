@@ -53,6 +53,8 @@ export const userVocabulary = pgTable("user_vocabulary", {
   userId: text("user_id").notNull().references(() => users.id),
   wordId: integer("word_id").notNull().references(() => words.id),
   status: varchar("status", { length: 20 }).notNull().$type<"learning" | "review" | "mastered">().default("learning"),
+  notes: text("notes"),
+  scenarioId: integer("scenario_id").references(() => scenarios.id),
   addedAt: timestamp("added_at").defaultNow().notNull(),
 }, (table) => ({
   uniqueUserWord: uniqueIndex("unique_user_word").on(table.userId, table.wordId),

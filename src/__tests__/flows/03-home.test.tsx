@@ -36,9 +36,9 @@ describe("03 — Home Page", () => {
     expect(screen.getByText(/Ready to master/)).toBeInTheDocument();
   });
 
-  it("shows Today's Goal section", () => {
+  it("shows My Italy section", () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByText("Today's Goal")).toBeInTheDocument();
+    expect(screen.getByText("My Italy")).toBeInTheDocument();
   });
 
   it("each scenario card links to correct detail page", async () => {
