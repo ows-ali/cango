@@ -61,27 +61,6 @@ export default function HomePage() {
           <p className="text-sm italic underline text-on-surface">Our no experience is locked and never will be.</p>
         </section>
 
-        {/* Daily Goal */}
-        <section className="mb-8">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-outline-variant/30">
-            <div className="flex flex-col gap-4">
-              <div>
-                <h2 className="text-xs text-secondary uppercase tracking-wider mb-2 font-semibold">Today's Goal</h2>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-on-surface">0</span>
-                  <span className="text-base text-on-surface-variant">/ 100 XP</span>
-                </div>
-                <div className="mt-4 w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
-                  <div className="bg-primary h-full rounded-full transition-all duration-700" style={{ width: "0%" }} />
-                </div>
-              </div>
-              <button className="w-full bg-primary text-on-primary py-3 rounded-lg font-semibold shadow-sm">
-                Quick Session
-              </button>
-            </div>
-          </div>
-        </section>
-
         {/* My Italy */}
         <section className="flex flex-col gap-6">
           <h3 className="font-headline text-2xl text-on-surface">My Italy</h3>
@@ -100,7 +79,9 @@ export default function HomePage() {
             </div>
           )}
 
-          {scenarios.map((s) => (
+          {scenarios.filter((s) =>
+            s.levels?.some((sl) => sl.level.name === userLevel)
+          ).map((s) => (
             <Link key={s.id} href={`/scenario/${s.slug}`}>
               <div className="bg-white flex flex-col rounded-xl overflow-hidden shadow-sm border border-outline-variant/30 hover:shadow-md transition-shadow">
                 <div className="h-40 relative overflow-hidden">
@@ -114,13 +95,12 @@ export default function HomePage() {
                       return (
                         <span
                           key={lvl}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-                            !hasLevel
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold border ${!hasLevel
                               ? "bg-gray-100 text-gray-400 border-gray-200 line-through"
                               : isActive
                                 ? "bg-primary text-white border-primary"
                                 : "bg-white/80 text-on-surface-variant border-outline-variant"
-                          }`}
+                            }`}
                         >
                           {lvl}
                         </span>

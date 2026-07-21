@@ -16,7 +16,6 @@ describe("03 — Home Page", () => {
       expect(screen.getByText("Transportation")).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    expect(screen.getByText("Doctor Visit")).toBeInTheDocument();
     expect(screen.getByText("Job Interview")).toBeInTheDocument();
   });
 
@@ -64,7 +63,7 @@ describe("03 — Home Page", () => {
     }, { timeout: 5000 });
 
     const cards = container.querySelectorAll("a[href*='/scenario/']");
-    expect(cards.length).toBe(3);
+    expect(cards.length).toBe(2);
 
     const section = container.querySelector("section.flex.flex-col");
     expect(section).toBeDefined();
@@ -78,6 +77,6 @@ describe("03 — Home Page", () => {
     }, { timeout: 5000 });
 
     const startButtons = screen.getAllByText("Start");
-    expect(startButtons.length).toBe(3);
+    expect(startButtons.length).toBe(2);
   });
 });

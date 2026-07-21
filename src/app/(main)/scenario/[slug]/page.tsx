@@ -106,7 +106,7 @@ export default function ScenarioDetailPage() {
     );
   }
 
-  const currentLevel = data.levels?.find((l) => l.level.id === activeLevel) || data.levels?.[0];
+  const currentLevel = data.levels?.find((l) => l.level.id === activeLevel);
   const levelLabel = currentLevel?.level.name || "B1";
 
   return (
@@ -179,10 +179,26 @@ export default function ScenarioDetailPage() {
         </div>
       </section>
 
+      {/* Level unavailable */}
+      {!currentLevel && (
+        <section className="max-w-[1280px] mx-auto px-margin-mobile pt-6 pb-0">
+          <div className="bg-surface-container rounded-xl p-8 text-center border border-outline-variant/30">
+            <span className="material-symbols-outlined text-4xl text-outline-variant mb-3">lock</span>
+            <h3 className="text-lg font-bold text-on-surface mb-1">Coming Soon</h3>
+            <p className="text-sm text-on-surface-variant">
+              {data.levels?.length
+                ? "This content isn't available at your current level yet. Try switching levels above."
+                : "This scenario is under development."}
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Content */}
+      {currentLevel && (
       <section className="max-w-[1280px] mx-auto px-margin-mobile py-6">
         <div className="space-y-6">
-          {currentLevel?.modules.map((mod, idx) => (
+          {currentLevel.modules.map((mod, idx) => (
             <div key={mod.id} className="bg-white rounded-xl border border-outline-variant/30 overflow-hidden shadow-sm">
               <button
                 onClick={(e) => {
@@ -249,6 +265,7 @@ export default function ScenarioDetailPage() {
           ))}
         </div>
       </section>
+      )}
     </div>
   );
 }

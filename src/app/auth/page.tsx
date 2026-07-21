@@ -1,17 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 
 export default function AuthPage() {
+  const { data: session, status } = useSession();
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  if (status === "loading") return null;
+  if (session) {
+    router.push("/home");
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
