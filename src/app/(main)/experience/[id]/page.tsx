@@ -246,6 +246,14 @@ export default function ExperiencePlayerPage() {
     if (bestChallengeDone && !tabBestCompleted) setTabBestCompleted(true);
   }, [bestChallengeDone]);
 
+  useEffect(() => {
+    if (completed && data) {
+      fetch(`/api/content/experience/${data.id}`).then((r) => r.json()).then((d) => {
+        if (d?.vocabulary?.length) setVocabWords(d.vocabulary);
+      }).catch(() => {});
+    }
+  }, [completed, data]);
+
   if (!data) {
     return (
       <div className="min-h-screen bg-background">
@@ -300,6 +308,10 @@ export default function ExperiencePlayerPage() {
 
   function handleComplete() {
     if (!canComplete || completing || !data) return;
+    if (progress?.lessonXpClaimed) {
+      setCompleted(true);
+      return;
+    }
     setCompleting(true);
     const p1 = fetch("/api/user/experience/complete", {
       method: "POST",
@@ -323,9 +335,6 @@ export default function ExperiencePlayerPage() {
       setXpEarned(earned > 0);
       setCompleted(true);
       refreshStats();
-      fetch(`/api/content/experience/${id}`).then((r) => r.json()).then((d) => {
-        if (d?.vocabulary?.length) setVocabWords(d.vocabulary);
-      }).catch(() => {});
     }).catch(() => setCompleting(false));
   }
 

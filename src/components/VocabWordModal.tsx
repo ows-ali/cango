@@ -34,6 +34,7 @@ export function VocabWordModal({ word, allScenarios, onClose, onUpdated, onDelet
   const [scenarioId, setScenarioId] = useState<number | null>(word.scenarioId);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const hasChanges = status !== word.status || notes !== (word.notes || "") || scenarioId !== word.scenarioId;
 
@@ -54,17 +55,20 @@ export function VocabWordModal({ word, allScenarios, onClose, onUpdated, onDelet
   };
 
   const handleDelete = async () => {
-    if (!confirm("Remove this word from your vocabulary?")) return;
-    setDeleting(true);
-    try {
-      const res = await fetch("/api/vocabulary", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wordId: word.wordId }),
-      });
-      if (res.ok) onDeleted(word.wordId);
-    } catch {}
-    setDeleting(false);
+    if (confirmingDelete) {
+      setDeleting(true);
+      try {
+        const res = await fetch("/api/vocabulary", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wordId: word.wordId }),
+        });
+        if (res.ok) onDeleted(word.wordId);
+      } catch {}
+      setDeleting(false);
+    } else {
+      setConfirmingDelete(true);
+    }
   };
 
   const displayScenarios = scenarioId
@@ -164,30 +168,51 @@ export function VocabWordModal({ word, allScenarios, onClose, onUpdated, onDelet
         </div>
 
         {/* Footer */}
-        <div className="p-6 pt-4 border-t border-outline-variant/20 flex items-center justify-between gap-3">
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="text-sm text-error font-medium px-3 py-2 rounded-lg hover:bg-error/5 transition-colors disabled:opacity-50"
-          >
-            {deleting ? "Removing..." : "Remove"}
-          </button>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface font-medium text-sm hover:bg-surface-container-high transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!hasChanges || saving}
-              className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-sm hover:bg-primary-container transition-colors disabled:opacity-50"
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
+        {confirmingDelete ? (
+          <div className="p-6 pt-4 border-t border-outline-variant/20 space-y-3">
+            <p className="text-sm text-on-surface-variant">Remove this word from your vocabulary?</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface font-medium text-sm hover:bg-surface-container-high transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-xl bg-error text-white font-semibold text-sm shadow-sm hover:opacity-90 transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Removing..." : "Yes, Remove"}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-6 pt-4 border-t border-outline-variant/20 flex items-center justify-between gap-3">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-sm text-error font-medium px-3 py-2 rounded-lg hover:bg-error/5 transition-colors disabled:opacity-50"
+            >
+              Remove
+            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface font-medium text-sm hover:bg-surface-container-high transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!hasChanges || saving}
+                className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-sm hover:bg-primary-container transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

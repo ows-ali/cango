@@ -6,11 +6,13 @@ import {
   challenges, challengeItems
 } from "../src/lib/db/schema";
 
+const SKIP_EXISTING = true;
+
 export async function addWord(target: string, english: string, article?: string, plural?: string, exp?: number) {
   const existing = await db.select({ id: words.id }).from(words)
     .where(eq(words.targetWord, target)).limit(1);
   if (existing.length > 0) {
-    if (exp) {
+    if (exp && !SKIP_EXISTING) {
       await db.insert(experienceWords).values({ experienceId: exp, wordId: existing[0].id }).onConflictDoNothing();
     }
     return existing[0].id;
@@ -40,6 +42,8 @@ export async function addExperience(
   const existing = await db.select({ id: experiences.id }).from(experiences)
     .where(and(eq(experiences.moduleId, moduleId), eq(experiences.title, title)))
     .limit(1);
+
+  if (existing.length > 0 && SKIP_EXISTING) return existing[0].id;
 
   let eid: number;
   if (existing.length > 0) {
