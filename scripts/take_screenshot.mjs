@@ -40,6 +40,10 @@ async function main() {
   });
 
   try {
+    console.log("Navigating to http://localhost:3000/ (landing)...");
+    await page.goto("http://localhost:3000/", { waitUntil: "networkidle" });
+    await captureViewports(page, "landing");
+
     console.log("Navigating to http://localhost:3000/auth...");
     await page.goto("http://localhost:3000/auth", { waitUntil: "networkidle" });
     
