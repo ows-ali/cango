@@ -158,9 +158,9 @@ export default function VocabPage() {
 
         {/* Loading */}
         {loading && (
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto pb-4">
             {[1, 2, 3].map((col) => (
-              <div key={col} className="min-w-[260px] flex-1 bg-surface-container rounded-xl p-4 animate-pulse space-y-3">
+              <div key={col} className="w-full md:min-w-[260px] md:flex-1 bg-surface-container rounded-xl p-4 animate-pulse space-y-3">
                 <div className="h-5 bg-surface-container-highest rounded w-20" />
                 {[1, 2, 3].map((c) => (
                   <div key={c} className="h-16 bg-white rounded-lg border border-outline-variant/30" />
@@ -193,11 +193,11 @@ export default function VocabPage() {
 
         {/* Kanban columns */}
         {!loading && filteredWordsCount > 0 && (
-          <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
+          <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
             {sections.map((section) => (
               <div
                 key={section.key}
-                className="min-w-[260px] flex-1 bg-surface-container rounded-xl p-4"
+                className="w-full md:min-w-[260px] md:flex-1 bg-surface-container rounded-xl p-4"
                 onDragOver={(e) => { e.preventDefault(); }}
                 onDrop={(e) => { e.preventDefault(); handleDrop(section.key); }}
               >
