@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getScenarioMedia } from "@/lib/scenario-media";
 
 interface HeroMediaProps {
@@ -36,70 +36,75 @@ export function HeroMedia({
     });
   }
   if (images.length === 0) {
-    images.push("/images/onboarding-bg.jpg");
+    images.push("/images/scenario-transportation.jpg");
   }
 
   const video = videoUrl || mediaInfo?.video;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Auto-advance slideshow if enabled and multiple images exist
   useEffect(() => {
-    if (!enableSlideshow || images.length <= 1 || !isPlaying || video) return;
+    if (!enableSlideshow || images.length <= 1 || !isPlaying || isVideoLoaded) return;
 
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
     }, 6000);
 
     return () => clearInterval(timer);
-  }, [images.length, enableSlideshow, isPlaying, video]);
+  }, [images.length, enableSlideshow, isPlaying, isVideoLoaded]);
 
   return (
     <div className={`relative overflow-hidden ${className} ${aspectRatio ? aspectRatio : ""}`}>
-      {/* Background Video if provided */}
-      {video ? (
+      {/* Base Image Layer / Multi-Photo Slideshow */}
+      <div className="absolute inset-0 w-full h-full bg-slate-900 z-0">
+        {images.map((img, idx) => (
+          <div
+            key={img + idx}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+              idx === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
+          >
+            <img
+              src={img}
+              alt={`${altText} ${idx + 1}`}
+              className={`w-full h-full object-cover object-center transition-transform duration-10000 ease-linear ${
+                idx === currentIndex ? "scale-110" : "scale-100"
+              }`}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = "/images/scenario-transportation.jpg";
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Video Overlay Layer if provided */}
+      {video && (
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover scale-105"
+          onCanPlay={() => setIsVideoLoaded(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 z-15 ${
+            isVideoLoaded ? "opacity-100" : "opacity-0"
+          }`}
         >
           <source src={video} type="video/mp4" />
         </video>
-      ) : (
-        /* Image / Multi-Photo Slideshow with smooth cross-fade & Ken-Burns subtle zoom */
-        <div className="absolute inset-0 w-full h-full bg-slate-900">
-          {images.map((img, idx) => (
-            <div
-              key={img + idx}
-              className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
-                idx === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
-              }`}
-            >
-              <img
-                src={img}
-                alt={`${altText} ${idx + 1}`}
-                className={`w-full h-full object-cover object-center transition-transform duration-10000 ease-linear ${
-                  idx === currentIndex ? "scale-110" : "scale-100"
-                }`}
-                onError={(e) => {
-                  // Fallback if image fails
-                  (e.currentTarget as HTMLImageElement).src = "/images/onboarding-bg.jpg";
-                }}
-              />
-            </div>
-          ))}
-        </div>
       )}
 
       {/* High-quality cinematic vignette & gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20 z-20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/20 z-20 pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 z-20 pointer-events-none" />
 
-      {/* Multi-photo Slideshow indicators if >1 image */}
-      {!video && images.length > 1 && (
+      {/* Multi-photo Slideshow indicators if >1 image and video is not playing */}
+      {!isVideoLoaded && images.length > 1 && (
         <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
           {images.map((_, idx) => (
             <button
@@ -120,6 +125,14 @@ export function HeroMedia({
               {isPlaying ? "pause" : "play_arrow"}
             </span>
           </button>
+        </div>
+      )}
+
+      {/* Video Badge indicator if Video is active */}
+      {video && (
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-white text-xs font-medium">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <span>Video Header</span>
         </div>
       )}
 

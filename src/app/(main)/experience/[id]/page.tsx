@@ -30,7 +30,7 @@ interface Challenge {
 }
 
 interface ExperienceData {
-  id: number; title: string; audioUrl: string | null; imageUrl?: string | null; duration: string;
+  id: number; title: string; audioUrl: string | null; imageUrl?: string | null; scenarioSlug?: string | null; duration: string;
   transcripts: TranscriptLine[]; questions: Question[]; challenges: Challenge[];
 }
 
@@ -440,6 +440,7 @@ export default function ExperiencePlayerPage() {
         {/* Hero + Audio */}
         <section className="w-full space-y-6">
           <HeroMedia
+            slug={data.scenarioSlug ?? undefined}
             mediaUrl={data.imageUrl}
             altText={data.title}
             aspectRatio="aspect-video md:aspect-[21/9]"

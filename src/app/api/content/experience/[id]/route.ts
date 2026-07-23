@@ -12,7 +12,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     .eq("id", expId)
     .maybeSingle();
   if (expError) throw expError;
-  if (!exp) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  let scenarioSlug: string | null = null;
+  if (exp.module_id) {
+    const { data: mod } = await supabase.from("modules").select("scenario_level_id").eq("id", exp.module_id).single();
+    if (mod?.scenario_level_id) {
+      const { data: sl } = await supabase.from("scenario_levels").select("scenario_id").eq("id", mod.scenario_level_id).single();
+      if (sl?.scenario_id) {
+        const { data: sc } = await supabase.from("scenarios").select("slug").eq("id", sl.scenario_id).single();
+        if (sc?.slug) scenarioSlug = sc.slug;
+      }
+    }
+  }
 
   const [transcriptsResult, questsResult, chalsResult, vocabLinksResult] = await Promise.all([
     supabase.from("transcript_lines").select("*").eq("experience_id", expId).order("order"),
@@ -94,6 +104,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({
     id: exp.id,
     moduleId: exp.module_id,
+    scenarioSlug,
     title: exp.title,
     description: exp.description,
     audioUrl: exp.audio_url,
