@@ -27,7 +27,47 @@ export async function POST(req: Request) {
     .eq("id", session.user.id)
     .maybeSingle();
 
-  const level = user?.cefr_level || "A2";
+  // Resolve CEFR level: scenario-specific if in an experience, global otherwise
+  let level = user?.cefr_level || "A2";
+
+  if (context?.experienceId) {
+    const { data: exp } = await supabase
+      .from("experiences")
+      .select("module_id")
+      .eq("id", context.experienceId)
+      .single();
+    if (exp) {
+      const { data: mod } = await supabase
+        .from("modules")
+        .select("scenario_level_id")
+        .eq("id", exp.module_id)
+        .single();
+      if (mod) {
+        const { data: sl } = await supabase
+          .from("scenario_levels")
+          .select("scenario_id")
+          .eq("id", mod.scenario_level_id)
+          .single();
+        if (sl) {
+          const { data: setting } = await supabase
+            .from("user_scenario_settings")
+            .select("selected_level_id")
+            .eq("user_id", session.user.id)
+            .eq("scenario_id", sl.scenario_id)
+            .maybeSingle();
+          if (setting?.selected_level_id) {
+            const { data: lvl } = await supabase
+              .from("levels")
+              .select("name")
+              .eq("id", setting.selected_level_id)
+              .single();
+            if (lvl) level = lvl.name;
+          }
+        }
+      }
+    }
+  }
+
   systemParts.push(`The user's current CEFR level is ${level}. Adjust your Italian complexity to match.`);
 
   if (user?.goals?.length) {
@@ -43,11 +83,11 @@ export async function POST(req: Request) {
 
     if (transcripts?.length) {
       const dialogue = transcripts
-        .map((t) => `${t.speaker ? `[${t.speaker}] ` : ""}${t.target_text} (${t.translation_text})`)
+        .map((t) => `${t.speaker ? `[${t.speaker}] ` : ""}${t.target_text} [t]${t.translation_text}[/t]`)
         .join("\n");
       systemParts.push(
         `The user just practiced this dialogue:\n${dialogue}\n\n`
-        + `Use it as reference. Suggest roleplay where you play one speaker and they play the other.`
+        + `Use it as reference for roleplay.`
       );
     }
 
@@ -65,7 +105,7 @@ export async function POST(req: Request) {
 
       if (vocab?.length) {
         systemParts.push(
-          `Key vocabulary from this experience: ${vocab.map(v => `${v.target_word} (${v.translation_text})`).join(", ")}.`
+          `Key vocabulary from this experience: ${vocab.map(v => `${v.target_word} [t]${v.translation_text}[/t]`).join(", ")}.`
         );
       }
     }
@@ -82,13 +122,20 @@ export async function POST(req: Request) {
 
   if (context?.experienceId) {
     systemParts.push(
-      "Guidelines: Respond in Italian primarily, with English translations in parentheses for complex sentences. "
+      "Guidelines: Respond in Italian. After any sentence that may need clarification, append [t]English translation[/t]. "
+      + "Do not use parentheses for translations. "
       + "Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples. "
       + "Keep responses concise (2-4 sentences)."
     );
+    systemParts.push(
+      "When the user says they'll play a role (e.g. 'Play as: Patient'), immediately start roleplaying as the other character from the dialogue. "
+      + "Do NOT ask what they want to practice — just begin the roleplay conversation. "
+      + "If they choose 'Play as: Yourself', be the Italian tutor helping them practice naturally."
+    );
   } else {
     systemParts.push(
-      "Guidelines: Respond in Italian primarily, with English translations in parentheses for complex sentences. "
+      "Guidelines: Respond in Italian. After any sentence that may need clarification, append [t]English translation[/t]. "
+      + "Do not use parentheses for translations. "
       + "Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples. "
       + "Keep responses concise (2-4 sentences)."
     );

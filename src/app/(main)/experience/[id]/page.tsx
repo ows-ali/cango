@@ -728,7 +728,7 @@ export default function ExperiencePlayerPage() {
               <div className="min-h-[300px]">
                 <ChatUI
                   context={{ experienceId: data.id }}
-                  welcomeMessage={`Let's practice this dialogue! I'll be the other speaker — try replying in Italian.`}
+                  roleSuggestions={[...new Set(data.transcripts.map(t => t.speaker).filter(Boolean))] as string[]}
                   placeholder="Type your response in Italian..."
                 />
               </div>

@@ -13,6 +13,7 @@ interface Props {
   welcomeMessage?: string;
   placeholder?: string;
   suggestions?: string[];
+  roleSuggestions?: string[];
 }
 
 type TtsLang = "it-IT" | "de-DE";
@@ -34,14 +35,21 @@ function stopSpeaking() {
   window.speechSynthesis.cancel();
 }
 
-function stripTranslations(text: string): string {
-  return text.replace(/\s*\([^)]*\)/g, "");
+function parseMessage(content: string): { italian: string; translation: string } {
+  const parts: string[] = [];
+  const italian = content.replace(/\[t\](.*?)\[\/t\]/g, (_, t) => {
+    parts.push(t);
+    return "";
+  }).trim();
+  return { italian, translation: parts.join("; ") };
 }
 
-export function ChatUI({ context, welcomeMessage, placeholder, suggestions }: Props) {
+export function ChatUI({ context, welcomeMessage, placeholder, suggestions, roleSuggestions }: Props) {
   const [messages, setMessages] = useState<Message[]>(() => {
     const initial: Message[] = [];
-    if (welcomeMessage) {
+    if (roleSuggestions?.length) {
+      // no welcome message — role chips serve as the welcome
+    } else if (welcomeMessage) {
       initial.push({ role: "assistant", content: welcomeMessage });
     } else {
       initial.push({
@@ -52,12 +60,13 @@ export function ChatUI({ context, welcomeMessage, placeholder, suggestions }: Pr
     }
     return initial;
   });
+  const [showRolePicker, setShowRolePicker] = useState(!!roleSuggestions?.length);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [listening, setListening] = useState(false);
-  const [showTranslation, setShowTranslation] = useState(false);
   const [ttsLang, setTtsLang] = useState<TtsLang>("it-IT");
+  const [expandedTranslations, setExpandedTranslations] = useState<Record<number, boolean>>({});
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -157,65 +166,74 @@ export function ChatUI({ context, welcomeMessage, placeholder, suggestions }: Pr
       setSpeaking(false);
     } else {
       setSpeaking(true);
-      speak(text, ttsLang, () => setSpeaking(false));
+      speak(parseMessage(text).italian, ttsLang, () => setSpeaking(false));
     }
+  };
+
+  const toggleTranslation = (idx: number) => {
+    setExpandedTranslations((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
 
   return (
     <div className="flex flex-col h-full min-h-[400px]">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 pb-2 border-b border-outline-variant/20 mb-2">
-        <button
-          onClick={() => setShowTranslation(!showTranslation)}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
-            showTranslation
-              ? "bg-primary text-on-primary"
-              : "bg-surface-container-high text-on-surface-variant"
-          }`}
-        >
-          <span className="material-symbols-outlined text-sm">translate</span>
-          {showTranslation ? "Translations On" : "Translations Off"}
-        </button>
-        <button
-          onClick={() => setTtsLang(ttsLang === "it-IT" ? "de-DE" : "it-IT")}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
-            ttsLang === "de-DE"
-              ? "bg-primary text-on-primary"
-              : "bg-surface-container-high text-on-surface-variant"
-          }`}
-        >
-          <span className="material-symbols-outlined text-sm">volume_up</span>
-          {ttsLang === "it-IT" ? "IT" : "DE"}
-        </button>
-      </div>
-
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 px-1" style={{ scrollbarWidth: "thin" }}>
+      <div className="flex-1 overflow-y-auto space-y-4 px-1" style={{ scrollbarWidth: "thin" }}>
         {messages.map((msg, i) => {
-          const displayContent = msg.role === "assistant" && !showTranslation
-            ? stripTranslations(msg.content)
-            : msg.content;
+          const parsed = msg.role === "assistant" ? parseMessage(msg.content) : null;
           return (
             <div key={i} className={`flex gap-2 items-start ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
                 <TeacherAvatar size={32} className="shrink-0 mt-1" />
               )}
               <div
-                className={`relative group max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                   msg.role === "user"
-                    ? "bg-primary text-on-primary rounded-br-md shadow-sm"
-                    : "bg-surface-container-high text-on-surface rounded-bl-md shadow-sm"
+                    ? "bg-primary text-on-primary rounded-br-md"
+                    : "bg-surface-container-high text-on-surface rounded-bl-md"
                 }`}
               >
-                <p>{displayContent}</p>
+                <p>{parsed ? parsed.italian : msg.content}</p>
+
+                {parsed && parsed.translation && (
+                  <div className="mt-1">
+                    <button
+                      onClick={() => toggleTranslation(i)}
+                      className="text-xs text-primary font-medium flex items-center gap-1 hover:underline"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        {expandedTranslations[i] ? "expand_less" : "expand_more"}
+                      </span>
+                      {expandedTranslations[i] ? "Hide meaning" : "Show meaning"}
+                    </button>
+                    {expandedTranslations[i] && (
+                      <p className="mt-1 text-xs text-on-surface-variant italic border-l-2 border-outline-variant pl-2">
+                        {parsed.translation}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {msg.role === "assistant" && (
-                  <div className="absolute -bottom-5 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-outline-variant/10">
                     <button
                       onClick={() => handlePlay(msg.content)}
-                      className="text-xs text-primary"
+                      className="flex items-center gap-1 text-xs text-primary font-medium hover:underline"
                       title={speaking ? "Stop" : "Listen"}
                     >
-                      <span className="material-symbols-outlined text-sm">{speaking ? "stop" : "play_arrow"}</span>
+                      <span className="material-symbols-outlined text-sm">
+                        {speaking ? "stop_circle" : "play_circle"}
+                      </span>
+                      {speaking ? "Stop" : "Listen"}
+                    </button>
+                    <button
+                      onClick={() => setTtsLang(ttsLang === "it-IT" ? "de-DE" : "it-IT")}
+                      className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                        ttsLang === "de-DE"
+                          ? "bg-primary/10 text-primary"
+                          : "bg-surface-container-high text-on-surface-variant"
+                      }`}
+                    >
+                      {ttsLang === "it-IT" ? "IT" : "DE"}
                     </button>
                   </div>
                 )}
@@ -240,8 +258,29 @@ export function ChatUI({ context, welcomeMessage, placeholder, suggestions }: Pr
         <div ref={endRef} />
       </div>
 
-      {/* Suggestions */}
-      {suggestions && suggestions.length > 0 && !loading && (
+      {/* Role picker (experience chat, first load) */}
+      {showRolePicker && roleSuggestions && roleSuggestions.length > 0 && !loading && (
+        <div className="pt-2 pb-1">
+          <p className="text-xs text-on-surface-variant font-medium mb-2">Ciao! Pick a role to practice:</p>
+          <div className="flex flex-wrap gap-2">
+            {["Play as: Yourself", ...roleSuggestions.map((r) => `Play as: ${r}`)].map((s, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  sendMessage(s);
+                  setShowRolePicker(false);
+                }}
+                className="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium border border-outline-variant/30 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Suggestions (tutor page) */}
+      {suggestions && suggestions.length > 0 && !loading && !showRolePicker && (
         <div className="flex flex-wrap gap-2 pt-2 pb-1">
           {suggestions.map((s, i) => (
             <button
