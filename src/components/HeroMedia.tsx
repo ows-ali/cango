@@ -40,6 +40,8 @@ export function HeroMedia({
   }
 
   const video = videoUrl || mediaInfo?.video;
+  const motion = mediaInfo?.motion || "zoom-in";
+  const motionClass = `animate-kenburns-${motion}`;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -71,8 +73,8 @@ export function HeroMedia({
             <img
               src={img}
               alt={`${altText} ${idx + 1}`}
-              className={`w-full h-full object-cover object-center transition-transform duration-10000 ease-linear ${
-                idx === currentIndex ? "scale-110" : "scale-100"
+              className={`w-full h-full object-cover object-center ${
+                idx === currentIndex ? motionClass : "scale-100"
               }`}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = "/images/scenario-transportation.jpg";

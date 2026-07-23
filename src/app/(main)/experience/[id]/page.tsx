@@ -157,19 +157,48 @@ export default function ExperiencePlayerPage() {
     }).catch(() => { });
   }, [session, id]);
 
-  useEffect(() => {
-    if (!waveformRef.current || !data) return;
-    const bars = 60;
-    const wf = waveformRef.current;
-    wf.innerHTML = "";
-    for (let i = 0; i < bars; i++) {
-      const bar = document.createElement("div");
-      const height = Math.random() * 80 + 10;
-      bar.className = `w-1 rounded-t-full ${i < 20 ? "bg-primary" : "bg-primary/20"}`;
-      bar.style.height = `${height}%`;
-      wf.appendChild(bar);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  function parseDurationSeconds(durationStr?: string | null, transcripts?: TranscriptLine[]): number {
+    if (durationStr && durationStr.includes(":")) {
+      const [m, s] = durationStr.split(":").map(Number);
+      if (!isNaN(m) && !isNaN(s) && (m > 0 || s > 0)) {
+        return m * 60 + s;
+      }
     }
-  }, [data]);
+    if (transcripts && transcripts.length > 0) {
+      const charCount = transcripts.reduce((acc, t) => acc + t.targetText.length, 0);
+      return Math.max(15, Math.ceil(charCount / 10));
+    }
+    return 45;
+  }
+
+  function formatMMSS(totalSec: number): string {
+    const m = Math.floor(totalSec / 60);
+    const s = Math.floor(totalSec % 60);
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+  }
+
+  const totalSeconds = parseDurationSeconds(data?.duration, data?.transcripts);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+    if (isPlaying) {
+      timer = setInterval(() => {
+        setCurrentTime((prev) => {
+          if (prev >= totalSeconds) {
+            setIsPlaying(false);
+            if ("speechSynthesis" in window) speechSynthesis.cancel();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isPlaying, totalSeconds]);
 
   function getVoiceForSpeaker(speaker: string | null): SpeechSynthesisVoice | null {
     const voices = italianVoices.current;
@@ -216,6 +245,30 @@ export default function ExperiencePlayerPage() {
     speakTranscript(0);
     setIsPlaying(true);
   }, [data, isPlaying]);
+
+  function handleReplay3() {
+    setCurrentTime((prev) => {
+      const next = Math.max(0, prev - 3);
+      if (data?.transcripts?.length) {
+        const lineIdx = Math.floor((next / totalSeconds) * data.transcripts.length);
+        if ("speechSynthesis" in window) speechSynthesis.cancel();
+        if (isPlaying) speakTranscript(lineIdx);
+      }
+      return next;
+    });
+  }
+
+  function handleForward3() {
+    setCurrentTime((prev) => {
+      const next = Math.min(totalSeconds, prev + 3);
+      if (data?.transcripts?.length) {
+        const lineIdx = Math.floor((next / totalSeconds) * data.transcripts.length);
+        if ("speechSynthesis" in window) speechSynthesis.cancel();
+        if (isPlaying) speakTranscript(lineIdx);
+      }
+      return next;
+    });
+  }
 
   // Per-tab completion (derived before early return so hooks stay ordered)
   const vocabChallengeDone = vocabMatchPairs.length > 0 && vocabMatchPairs.every((p) => p.matched);
@@ -454,17 +507,63 @@ export default function ExperiencePlayerPage() {
 
           {/* Waveform + Controls */}
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/30">
-            <div ref={waveformRef} className="flex items-end justify-between h-16 gap-1 mb-4 px-2" />
+            {/* Dynamic Equalizer Waveform Bars */}
+            <div className="flex items-end justify-between h-16 gap-1 mb-4 px-2 overflow-hidden">
+              {Array.from({ length: 48 }).map((_, i) => {
+                const progressRatio = totalSeconds > 0 ? currentTime / totalSeconds : 0;
+                const barRatio = i / 48;
+                const isPlayed = barRatio <= progressRatio;
+                const heights = [30, 45, 60, 80, 50, 35, 70, 90, 65, 40, 55, 75, 30, 60, 85, 45, 65, 95, 50, 35, 75, 60, 40, 80];
+                const baseHeight = heights[i % heights.length];
+
+                return (
+                  <div
+                    key={i}
+                    className={`w-1.5 rounded-t-full transition-all duration-300 ${
+                      isPlayed
+                        ? `bg-primary ${isPlaying ? "animate-eq" : ""}`
+                        : "bg-primary/20"
+                    }`}
+                    style={{
+                      height: `${baseHeight}%`,
+                      animationDelay: `${(i % 6) * 0.1}s`,
+                      animationDuration: `${0.4 + (i % 3) * 0.15}s`,
+                    }}
+                  />
+                );
+              })}
+            </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-on-surface-variant">0:00</span>
-              <div className="flex items-center gap-6">
-                <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">replay_10</button>
-                <button onClick={togglePlay} className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:opacity-90 transition-all">
-                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{isPlaying ? "pause" : "play_arrow"}</span>
+              <span className="text-xs font-semibold text-on-surface-variant min-w-[36px]">{formatMMSS(currentTime)}</span>
+              <div className="flex items-center gap-4 md:gap-6">
+                <button
+                  onClick={handleReplay3}
+                  className="flex items-center gap-1 text-on-surface-variant hover:text-primary font-bold text-xs bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/30 hover:border-primary transition-colors cursor-pointer"
+                  title="Rewind 3 seconds"
+                >
+                  <span className="material-symbols-outlined text-[16px]">replay</span>
+                  <span>-3s</span>
                 </button>
-                <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">forward_30</button>
+
+                <button
+                  onClick={togglePlay}
+                  className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:opacity-90 transition-all shadow-md cursor-pointer"
+                >
+                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    {isPlaying ? "pause" : "play_arrow"}
+                  </span>
+                </button>
+
+                <button
+                  onClick={handleForward3}
+                  className="flex items-center gap-1 text-on-surface-variant hover:text-primary font-bold text-xs bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/30 hover:border-primary transition-colors cursor-pointer"
+                  title="Forward 3 seconds"
+                >
+                  <span>+3s</span>
+                  <span className="material-symbols-outlined text-[16px]" style={{ transform: "scaleX(-1)" }}>replay</span>
+                </button>
               </div>
-              <span className="text-xs text-on-surface-variant">{data.duration}</span>
+              <span className="text-xs font-semibold text-on-surface-variant min-w-[36px] text-right">{formatMMSS(totalSeconds)}</span>
             </div>
           </div>
         </section>

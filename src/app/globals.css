@@ -87,3 +87,60 @@ h1, h2, h3, h4, .font-headline {
 .animate-fadeIn {
   animation: fadeIn 0.4s ease-out forwards;
 }
+
+/* Ken Burns Motion Animations for Scenario Headers */
+@keyframes kenburnsZoomIn {
+  from { transform: scale(1); }
+  to   { transform: scale(1.15); }
+}
+
+@keyframes kenburnsZoomOut {
+  from { transform: scale(1.15); }
+  to   { transform: scale(1); }
+}
+
+@keyframes kenburnsPanLeft {
+  from { transform: scale(1.12) translateX(0%); }
+  to   { transform: scale(1.12) translateX(-4%); }
+}
+
+@keyframes kenburnsPanRight {
+  from { transform: scale(1.12) translateX(-4%); }
+  to   { transform: scale(1.12) translateX(0%); }
+}
+
+@keyframes kenburnsPanUp {
+  from { transform: scale(1.12) translateY(3%); }
+  to   { transform: scale(1.12) translateY(-3%); }
+}
+
+.animate-kenburns-zoom-in {
+  animation: kenburnsZoomIn 12s ease-in-out infinite alternate;
+}
+
+.animate-kenburns-zoom-out {
+  animation: kenburnsZoomOut 12s ease-in-out infinite alternate;
+}
+
+.animate-kenburns-pan-left {
+  animation: kenburnsPanLeft 14s ease-in-out infinite alternate;
+}
+
+.animate-kenburns-pan-right {
+  animation: kenburnsPanRight 14s ease-in-out infinite alternate;
+}
+
+.animate-kenburns-pan-up {
+  animation: kenburnsPanUp 14s ease-in-out infinite alternate;
+}
+
+/* Audio Waveform Equalizer Animation */
+@keyframes eqBounce {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1.1); }
+}
+
+.animate-eq {
+  animation: eqBounce 0.6s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}

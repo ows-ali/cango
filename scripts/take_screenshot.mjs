@@ -82,7 +82,8 @@ async function main() {
     // Navigate to experience details
     console.log("Navigating to http://localhost:3000/experience/1...");
     await page.goto("http://localhost:3000/experience/1", { waitUntil: "load" });
-    await page.waitForTimeout(3000);
+    await page.waitForSelector("h3:has-text('Transcript')", { timeout: 15000 });
+    await page.waitForTimeout(1000);
     console.log("Experience details loaded!");
     await captureViewports(page, "experience");
 
