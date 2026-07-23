@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useStats } from "@/lib/stats-context";
 import { useContent } from "@/lib/content-context";
+import { HeroMedia } from "@/components/HeroMedia";
 
 interface ScenarioData {
   id: number;
@@ -30,11 +31,6 @@ interface ScenarioData {
 }
 
 const LEVEL_MAP: Record<string, number> = { A1: 4, A2: 1, B1: 2, B2: 3 };
-const HERO_IMAGES: Record<string, string> = {
-  transportation: "/images/scenario-transportation.jpg",
-  doctor: "/images/scenario-doctor.jpg",
-  "job-interview": "/images/scenario-job-interview.jpg",
-};
 
 export default function ScenarioDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -112,10 +108,8 @@ export default function ScenarioDetailPage() {
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       {/* Hero */}
-      <header className="relative h-64 md:h-80 w-full overflow-hidden">
-        <img src={HERO_IMAGES[slug as string] || "/images/onboarding-bg.jpg"} alt={data.name} className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-between p-margin-mobile">
+      <HeroMedia slug={slug as string} altText={data.name} className="h-64 md:h-80 w-full">
+        <div className="flex flex-col justify-between h-full p-margin-mobile">
           <div className="flex justify-between items-center">
             <Link href="/home" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-colors">
               <span className="material-symbols-outlined">arrow_back</span>
@@ -166,7 +160,7 @@ export default function ScenarioDetailPage() {
             </div>
           </div>
         </div>
-      </header>
+      </HeroMedia>
 
       {/* Per-scenario level info banner */}
       <section className="max-w-[1280px] mx-auto px-margin-mobile pt-4 pb-0">

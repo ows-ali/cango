@@ -41,35 +41,25 @@ async function main() {
 
   try {
     console.log("Navigating to http://localhost:3000/auth...");
-    await page.goto("http://localhost:3000/auth", { waitUntil: "load" });
+    await page.goto("http://localhost:3000/auth", { waitUntil: "networkidle" });
     
-    // Attempt to register first
-    console.log("Attempting to Sign Up with e2e@test.com...");
+    // Switch to Login tab directly
+    const loginTab = page.locator('button:has-text("Log In")');
+    if (await loginTab.isVisible()) {
+      console.log("Clicking Log In tab...");
+      await loginTab.click();
+    }
+    
     await page.fill('input[type="email"]', "e2e@test.com");
     await page.fill('input[type="password"]', "123456");
     await page.click('button[type="submit"]');
     
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(2000);
     
-    const isError = await page.isVisible('p:has-text("Email already in use")');
-    if (isError) {
-      console.log("Email already in use, switching to Log In mode...");
-      await page.click('button:has-text("Log In")');
-      await page.fill('input[type="email"]', "e2e@test.com");
-      await page.fill('input[type="password"]', "123456");
-      await page.click('button[type="submit"]');
-    }
-    
-    // Wait for the URL to change from /auth
-    console.log("Waiting for auth redirection to complete...");
-    await page.waitForFunction(() => !window.location.href.includes("/auth"), { timeout: 15000 });
-    
-    const currentUrl = page.url();
-    console.log("Auth redirection completed. Current URL:", currentUrl);
-    
-    if (currentUrl.includes("/onboarding")) {
-      console.log("Onboarding page detected. Navigating directly to /home...");
-      await page.goto("http://localhost:3000/home", { waitUntil: "load" });
+    // If still on auth page, try direct navigation
+    if (page.url().includes("/auth")) {
+      console.log("Navigating directly to /home...");
+      await page.goto("http://localhost:3000/home", { waitUntil: "networkidle" });
     }
     
     // Wait a couple of seconds to ensure page content loads fully
@@ -88,7 +78,14 @@ async function main() {
     
     // Capture Scenario
     await captureViewports(page, "scenario");
-    
+
+    // Navigate to experience details
+    console.log("Navigating to http://localhost:3000/experience/1...");
+    await page.goto("http://localhost:3000/experience/1", { waitUntil: "load" });
+    await page.waitForTimeout(3000);
+    console.log("Experience details loaded!");
+    await captureViewports(page, "experience");
+
     console.log("Screenshots captured successfully!");
   } catch (err) {
     console.error("Error during automation:", err);

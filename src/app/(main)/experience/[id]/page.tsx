@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
 import { ChatUI } from "@/components/ChatUI";
+import { HeroMedia } from "@/components/HeroMedia";
 
 interface TranscriptLine {
   id: number; targetText: string; translationText: string; speaker: string | null;
@@ -29,7 +30,7 @@ interface Challenge {
 }
 
 interface ExperienceData {
-  id: number; title: string; audioUrl: string | null; duration: string;
+  id: number; title: string; audioUrl: string | null; imageUrl?: string | null; duration: string;
   transcripts: TranscriptLine[]; questions: Question[]; challenges: Challenge[];
 }
 
@@ -438,14 +439,17 @@ export default function ExperiencePlayerPage() {
       <main className="flex-grow flex flex-col max-w-[1200px] mx-auto w-full gap-6 px-margin-mobile py-6 pb-32">
         {/* Hero + Audio */}
         <section className="w-full space-y-6">
-          <div className="relative w-full aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary-container to-primary">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-
-            <div className="absolute bottom-4 left-4">
+          <HeroMedia
+            mediaUrl={data.imageUrl}
+            altText={data.title}
+            aspectRatio="aspect-video md:aspect-[21/9]"
+            className="w-full rounded-2xl overflow-hidden shadow-lg"
+          >
+            <div className="absolute bottom-4 left-4 z-30">
               <h2 className="font-headline text-2xl text-white drop-shadow-lg">{data.title}</h2>
               <p className="text-white/80 text-sm">{data.duration}</p>
             </div>
-          </div>
+          </HeroMedia>
 
           {/* Waveform + Controls */}
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/30">

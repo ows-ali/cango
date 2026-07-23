@@ -7,6 +7,8 @@ import { useContent } from "@/lib/content-context";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 
+import { getScenarioMedia } from "@/lib/scenario-media";
+
 interface Scenario {
   id: number;
   slug: string;
@@ -18,11 +20,6 @@ interface Scenario {
 
 const LEVEL_MAP: Record<string, number> = { A1: 4, A2: 1, B1: 2, B2: 3 };
 const REVERSE_LEVEL_MAP: Record<number, string> = { 4: "A1", 1: "A2", 2: "B1", 3: "B2" };
-const HERO_IMAGES: Record<string, string> = {
-  transportation: "/images/scenario-transportation.jpg",
-  doctor: "/images/scenario-doctor.jpg",
-  "job-interview": "/images/scenario-job-interview.jpg",
-};
 
 export default function HomePage() {
   const { data: session, status } = useSession();
@@ -93,7 +90,7 @@ export default function HomePage() {
               <Link key={s.id} href={`/scenario/${s.slug}`} className="opacity-0 animate-fadeIn" style={{ animationDelay: `${i * 100}ms` }}>
                 <div className="bg-white flex flex-col rounded-2xl overflow-hidden shadow-sm border border-outline-variant/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 h-full">
                   <div className="aspect-[16/9] relative overflow-hidden">
-                    <img src={HERO_IMAGES[s.slug] || "/images/onboarding-bg.jpg"} alt={s.name} className="w-full h-full object-cover" />
+                    <img src={getScenarioMedia(s.slug).image} alt={s.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                     <div className="absolute top-3 left-3 flex gap-1">
                       {(["A1", "A2", "B1", "B2"] as const).map((lvl) => {
