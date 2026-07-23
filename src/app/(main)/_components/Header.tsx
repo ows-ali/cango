@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
+import { TeacherAvatar } from "@/components/TeacherAvatar";
 
 const navItems = [
   { href: "/home", label: "Home" },
+  { href: "/tutor", label: "Tutor" },
   { href: "/vocabulary", label: "Vocab" },
   { href: "/progress", label: "Stats" },
   { href: "/profile", label: "Profile" },
@@ -20,7 +22,10 @@ export default function Header() {
     <header className="bg-surface sticky top-0 z-40 border-b border-surface-container">
       <div className="flex justify-between items-center w-full px-margin-mobile h-16 max-w-[1280px] mx-auto">
         <div className="flex items-center gap-6">
-          <Logo size={82} />
+          <Link href="/home">
+            <Logo size={82} />
+          </Link>
+          <TeacherAvatar size={36} className="hidden md:block" />
           <nav className="hidden md:flex items-center gap-5">
             {navItems.map((item) => {
               const active = pathname.startsWith(item.href);
@@ -29,8 +34,8 @@ export default function Header() {
                   key={item.href}
                   href={item.href}
                   className={`text-sm transition-colors ${active
-                      ? "text-primary font-semibold"
-                      : "text-on-surface-variant hover:text-on-surface"
+                    ? "text-primary font-semibold"
+                    : "text-on-surface-variant hover:text-on-surface"
                     }`}
                 >
                   {item.label}

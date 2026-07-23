@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
+import { streamText } from "ai";
 import { auth } from "@/lib/auth";
 import { supabase } from "@/lib/db-supabase";
-import { getChatReply } from "@/lib/ai-provider";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import { getModel } from "@/lib/ai-provider";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -14,7 +10,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { messages, context } = await req.json() as { messages: Message[]; context?: { experienceId?: number } };
+  const { messages, context } = await req.json() as { messages: { role: string; content: string }[]; context?: { experienceId?: number } };
   if (!messages?.length) {
     return NextResponse.json({ error: "Missing messages" }, { status: 400 });
   }
@@ -84,20 +80,33 @@ export async function POST(req: Request) {
   const masteredCount = uvCount?.filter(v => v.status === "mastered").length || 0;
   systemParts.push(`The user has ${learningCount} words they're learning and ${masteredCount} they've mastered.`);
 
-  systemParts.push(
-    "Guidelines: Respond in Italian primarily, with English translations in parentheses for complex sentences. "
-    + "Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples. "
-    + "Keep responses concise (2-4 sentences)."
-  );
+  if (context?.experienceId) {
+    systemParts.push(
+      "Guidelines: Respond in Italian primarily, with English translations in parentheses for complex sentences. "
+      + "Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples. "
+      + "Keep responses concise (2-4 sentences)."
+    );
+  } else {
+    systemParts.push(
+      "Guidelines: Respond in Italian primarily, with English translations in parentheses for complex sentences. "
+      + "Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples. "
+      + "Keep responses concise (2-4 sentences)."
+    );
+    systemParts.push(
+      "You are ONLY an Italian language tutor. Do NOT answer questions unrelated to Italian language learning or Italian culture. "
+      + "If the user asks about something off-topic, gently redirect them back to Italian practice. "
+      + "When the user selects a suggestion ('Roleplay...', 'Revise vocabulary', 'Practice grammar', 'Free conversation'), "
+      + "immediately engage in that activity. For roleplay, act as the native Italian speaker."
+    );
+  }
 
   const systemPrompt = systemParts.join("\n");
 
-  const geminiMessages = messages.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
+  const result = streamText({
+    model: getModel(),
+    system: systemPrompt,
+    messages: messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+  });
 
-  const reply = await getChatReply(geminiMessages, systemPrompt);
-
-  return NextResponse.json({ reply });
+  return result.toTextStreamResponse();
 }
