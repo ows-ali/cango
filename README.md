@@ -13,7 +13,8 @@ speech synthesis for authentic pronunciation practice.
 ## Built With
 
 - **AI Coding Assistant:** Opencode, Antigravity
-- **AI Models:** DeepSeek, Gemini
+- **AI Models:** DeepSeek, Gemini, Groq
+- **AI SDK:** Vercel AI SDK
 - **Prototyping:** Google Stitch
 - **Image Generation:** Nano Banana
 
@@ -26,16 +27,22 @@ speech synthesis for authentic pronunciation practice.
 - Dexie.js (offline IndexedDB cache)
 - Vitest (unit/integration), Playwright (E2E)
 - Web Speech API / edge-tts (audio)
+- Web Speech API (SpeechRecognition)
 - PWA (manifest, service worker)
 
 
 ## Features
 
-- Real-world scenarios: transportation, doctor visits, job interviews
-- Adaptive CEFR levels (A2 → B1 → B2)
+- Real-world scenarios: transportation, doctor visits, job interviews, restaurant, shopping, social
+- Adaptive CEFR levels (A2 → B1 → B2), with per-scenario level settings
 - Interactive challenges: MCQs, matching, dialogue ordering, best-response
+- AI tutor chatbot with streaming responses — adapts to your CEFR level per scenario
+- Roleplay mode: pick any character from the dialogue and converse with the AI
+- Speech recognition (mic input) for Italian speaking practice
+- Text-to-speech in Italian and German with playback controls
+- Collapsible translations — view meanings on demand without clutter
+- Personalized practice suggestions based on completed experiences and CEFR
 - PWA: installable with offline support via service worker
-- Speech synthesis for Italian pronunciation practice
 - Streak tracking and XP rewards
 - Supabase + NextAuth credentials authentication
 
@@ -90,6 +97,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Deployment
+
+- **Production** — `main` branch auto-deploys to Vercel production
+- **Development** — `dev` branch auto-deploys to Vercel preview
+- Environment variables configured in Vercel project dashboard
+
 ## Testing
 
 ```bash
@@ -116,8 +129,9 @@ npm run test:e2e -- --ui
 
 ## Screenshots
 
-| | |
-|---|---|
-| ![Home](public/screenshots/home.png) | ![Module](public/screenshots/module.png) |
-| ![Experience](public/screenshots/experience.png) | ![Success](public/screenshots/success.png) |
-| ![Coming Soon](public/screenshots/coming-soon.png) | |
+| Mobile | Desktop |
+|--------|---------|
+| ![Landing](screenshot/mobile_landing.png) | ![Landing](screenshot/desktop_landing.png) |
+| ![Home](screenshot/mobile_home.png) | ![Home](screenshot/desktop_home.png) |
+| ![Experience](screenshot/mobile_experience.png) | ![Experience](screenshot/desktop_experience.png) |
+| ![Scenario](screenshot/mobile_scenario.png) | ![Scenario](screenshot/desktop_scenario.png) |
