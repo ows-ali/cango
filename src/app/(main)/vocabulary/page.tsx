@@ -49,12 +49,11 @@ export default function VocabPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const dragItem = useRef<VocabWord | null>(null);
 
-  const fetchWords = useCallback(async (scenarioId: number | "all") => {
+  const fetchWords = useCallback(async () => {
     if (status !== "authenticated") return;
     setLoading(true);
     try {
-      const params = scenarioId === "all" ? "" : `?scenarioId=${scenarioId}`;
-      const res = await fetch(`/api/vocabulary${params}`);
+      const res = await fetch("/api/vocabulary");
       const data = await res.json();
       setWords(data.words || []);
     } catch {}
@@ -62,8 +61,8 @@ export default function VocabPage() {
   }, [status]);
 
   useEffect(() => {
-    fetchWords(filterScenario);
-  }, [fetchWords, filterScenario]);
+    fetchWords();
+  }, [fetchWords]);
 
   const handleStatusChange = async (wordId: number, newStatus: "learning" | "review" | "mastered") => {
     setWords((prev) =>
@@ -100,12 +99,16 @@ export default function VocabPage() {
 
   const handleWordAdded = () => {
     setShowAddModal(false);
-    fetchWords(filterScenario);
+    fetchWords();
   };
+
+  const filteredWords = filterScenario === "all"
+    ? words
+    : words.filter((w) => w.scenarioId === filterScenario || w.scenarios.some((s) => s.id === filterScenario));
 
   const sections = STATUS_COLUMNS.map((col) => ({
     ...col,
-    items: words.filter((w) => w.status === col.key),
+    items: filteredWords.filter((w) => w.status === col.key),
   }));
 
   const filteredWordsCount = sections.reduce((sum, s) => sum + s.items.length, 0);

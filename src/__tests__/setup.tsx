@@ -17,6 +17,13 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
+vi.mock("next/image", () => ({
+  default: (props: any) => {
+    const { unoptimized: _, priority: __, ...rest } = props;
+    return <img {...rest} />;
+  },
+}));
+
 vi.mock("next-auth/react", () => ({
   useSession: vi.fn(() => ({
     data: {

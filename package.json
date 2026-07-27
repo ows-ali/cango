@@ -6,7 +6,7 @@
   "scripts": {
     "build:icons": "node scripts/generate-icons.mjs",
     "dev": "next dev",
-    "build": "node scripts/generate-icons.mjs && next build",
+    "build": "node scripts/generate-icons.mjs && vitest run && next build",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",

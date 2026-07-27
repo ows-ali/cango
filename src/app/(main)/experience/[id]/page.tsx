@@ -34,12 +34,11 @@ interface ExperienceData {
   transcripts: TranscriptLine[]; questions: Question[]; challenges: Challenge[];
 }
 
-const CHALLENGE_TABS = ["VOCAB_MATCH", "ARRANGE_DIALOGUE", "BEST_RESPONSE", "AI_CHAT"] as const;
+const CHALLENGE_TABS = ["VOCAB_MATCH", "ARRANGE_DIALOGUE", "BEST_RESPONSE"] as const;
 const TAB_LABELS: Record<string, string> = {
   VOCAB_MATCH: "Match",
   ARRANGE_DIALOGUE: "Arrange Dialogue",
   BEST_RESPONSE: "Best Response",
-  AI_CHAT: "AI Chat",
 };
 
 function shuffle<T>(arr: T[]): T[] {
@@ -95,6 +94,7 @@ export default function ExperiencePlayerPage() {
 
   // Challenge tab state
   const [activeTab, setActiveTab] = useState(0);
+  const [showAiChat, setShowAiChat] = useState(false);
   const [tabVocabCompleted, setTabVocabCompleted] = useState(false);
   const [tabArrangeCompleted, setTabArrangeCompleted] = useState(false);
   const [tabBestCompleted, setTabBestCompleted] = useState(false);
@@ -828,8 +828,26 @@ export default function ExperiencePlayerPage() {
               </div>
             )}
 
-            {activeTab === 3 && (
-              <div className="min-h-[300px]">
+          </div>
+        </section>
+
+        {/* AI Tutor - collapsed by default */}
+        <section className="max-w-[1200px] mx-auto w-full">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/30">
+            <button
+              onClick={() => setShowAiChat(!showAiChat)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">auto_awesome</span>
+                <h4 className="font-headline text-lg text-on-surface">Practice with AI Tutor</h4>
+              </div>
+              <span className={`material-symbols-outlined transition-transform ${showAiChat ? "rotate-180" : ""}`}>
+                expand_more
+              </span>
+            </button>
+            {showAiChat && (
+              <div className="mt-4 min-h-[300px]">
                 <ChatUI
                   context={{ experienceId: data.id }}
                   roleSuggestions={[...new Set(data.transcripts.map(t => t.speaker).filter(Boolean))] as string[]}

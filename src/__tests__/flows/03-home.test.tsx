@@ -76,7 +76,7 @@ describe("03 — Home Page", () => {
       expect(screen.getByText("Transportation")).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    const startButtons = screen.getAllByText("Start");
+    const startButtons = screen.getAllByText(/^Start/);
     expect(startButtons.length).toBe(2);
   });
 });

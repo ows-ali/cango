@@ -20,13 +20,10 @@ export default function WelcomePage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-30 pt-8 px-6 flex justify-center w-full">
-        <Logo size={48} />
-      </header>
 
       {/* Content */}
-      <main className="relative z-30 flex flex-col items-center justify-center px-6 text-center max-w-2xl mx-auto flex-grow my-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md text-xs font-semibold text-amber-300 mb-6">
+      <main className="relative z-30 flex flex-col items-center justify-center px-6 text-center max-w-2xl mx-auto flex-grow mb-8">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md text-xs font-semibold text-amber-300 my-6">
           <span>✨ Welcome to CanGo Italy</span>
         </div>
 

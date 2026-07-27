@@ -83,6 +83,49 @@ export async function getScenarioWordIds(scenarioId: number): Promise<number[]> 
   return [...new Set(ewRows.map((r) => r.word_id))];
 }
 
+export async function seedVocabularyForUser(userId: string, cefrLevel: string): Promise<void> {
+  const CEFR_TO_LEVEL_ID: Record<string, number> = { A1: 4, A2: 1, B1: 2, B2: 3 };
+  const levelId = CEFR_TO_LEVEL_ID[cefrLevel];
+  if (!levelId) return;
+
+  const { data: slRows } = await supabase
+    .from("scenario_levels")
+    .select("id, scenario_id")
+    .eq("level_id", levelId);
+
+  if (!slRows?.length) return;
+
+  const scenarioToSlIds = new Map<number, number[]>();
+  for (const row of slRows) {
+    const arr = scenarioToSlIds.get(row.scenario_id) || [];
+    arr.push(row.id);
+    scenarioToSlIds.set(row.scenario_id, arr);
+  }
+
+  const toInsert: { user_id: string; word_id: number; status: string; scenario_id: number; added_at: string }[] = [];
+
+  for (const [scenarioId, slIds] of scenarioToSlIds) {
+    const { data: modRows } = await supabase.from("modules").select("id").in("scenario_level_id", slIds);
+    if (!modRows?.length) continue;
+    const modIds = modRows.map((r) => r.id);
+
+    const { data: expRows } = await supabase.from("experiences").select("id").in("module_id", modIds);
+    if (!expRows?.length) continue;
+    const expIds = expRows.map((r) => r.id);
+
+    const { data: ewRows } = await supabase.from("experience_words").select("word_id").in("experience_id", expIds);
+    if (!ewRows?.length) continue;
+
+    const wordIds = [...new Set(ewRows.map((r) => r.word_id))].slice(0, 10);
+    for (const wordId of wordIds) {
+      toInsert.push({ user_id: userId, word_id: wordId, status: "learning", scenario_id: scenarioId, added_at: new Date().toISOString() });
+    }
+  }
+
+  if (!toInsert.length) return;
+  await supabase.from("user_vocabulary").upsert(toInsert, { onConflict: "user_id, word_id" });
+}
+
 export async function getCompletedCountForWord(userId: string, wordId: number): Promise<number> {
   const { data: ewRows } = await supabase
     .from("experience_words")

@@ -39,7 +39,11 @@ export default function AuthPage() {
       return;
     }
 
-    router.push(mode === "signup" ? "/onboarding/welcome" : "/home");
+    if (mode === "signup") {
+      window.location.href = "/onboarding/welcome";
+    } else {
+      router.push("/home");
+    }
   };
 
   return (

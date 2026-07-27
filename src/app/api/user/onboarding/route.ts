@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { supabase } from "@/lib/db-supabase";
+import { seedVocabularyForUser } from "@/lib/vocab-utils";
 
 export async function PATCH(req: Request) {
   const session = await auth();
@@ -16,6 +17,8 @@ export async function PATCH(req: Request) {
     .eq("id", session.user.id);
 
   if (error) throw error;
+
+  await seedVocabularyForUser(session.user.id, cefrLevel);
 
   return NextResponse.json({ ok: true });
 }
