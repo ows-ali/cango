@@ -1,11 +1,7 @@
 import "@testing-library/jest-dom/vitest";
-import { act } from "react";
-import React from "react";
 import { setupServer } from "msw/node";
 import { handlers, resetStores } from "./api/mocks/handlers";
 import { beforeAll, afterEach, afterAll, vi } from "vitest";
-
-(React as any).act ??= act;
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
