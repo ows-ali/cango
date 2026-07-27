@@ -42,9 +42,7 @@ export default function TutorPage() {
       ? completed.scenarios.map((s) => s.name).join(", ")
       : "";
 
-  const welcomeMessage = `Ciao! You're at ${cefr} level.${
-    scenarioList ? ` I see you've done ${scenarioList}.` : ""
-  } What would you like to practice today?`;
+  const welcomeMessage = `Ciao! Ready to practice at ${cefr} level? What would you like to do?`;
 
   return (
     <div className="min-h-screen bg-background pb-24">

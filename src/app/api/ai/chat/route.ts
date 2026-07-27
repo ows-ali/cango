@@ -20,6 +20,9 @@ export async function POST(req: Request) {
   systemParts.push(
     "You are an Italian language tutor. Your goal is to help the user practice Italian in a natural, encouraging way."
   );
+  systemParts.push(
+    "STRICT RULE: Respond with EXACTLY 1-2 short Italian sentences per reply. Never more than 2. One sentence is better than two."
+  );
 
   const { data: user } = await supabase
     .from("users")
@@ -68,7 +71,12 @@ export async function POST(req: Request) {
     }
   }
 
-  systemParts.push(`The user's current CEFR level is ${level}. Adjust your Italian complexity to match.`);
+  systemParts.push(
+    `The user's current CEFR level is ${level}. ALWAYS use vocabulary and grammar at this level or simpler. `
+    + `For A1: only present tense, basic greetings, very short sentences (max 5-6 words). `
+    + `For A2: present/past tense, common everyday phrases. `
+    + `For B1: more tenses, connected sentences. Every single sentence must be easily understandable to a learner at their level.`
+  );
 
   if (user?.goals?.length) {
     systemParts.push(`Their learning goals are: ${user.goals.join(", ")}.`);
@@ -121,24 +129,28 @@ export async function POST(req: Request) {
   systemParts.push(`The user has ${learningCount} words they're learning and ${masteredCount} they've mastered.`);
 
   if (context?.experienceId) {
+    systemParts.push("Guidelines: Respond in Italian.");
     systemParts.push(
-      "Guidelines: Respond in Italian. After any sentence that may need clarification, append [t]English translation[/t]. "
-      + "Do not use parentheses for translations. "
-      + "Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples. "
-      + "Keep responses concise (2-4 sentences)."
+      "CRITICAL: ALWAYS append [t]English translation[t] after EVERY Italian sentence. "
+      + "Example: 'Oggi fa bel tempo. Andiamo al parco? [t]The weather is nice today. Shall we go to the park?[t]' "
+      + "Do not use parentheses for translations."
     );
+    systemParts.push("Stay focused on the current scenario/dialogue topic. Do NOT switch to unrelated conversations.");
+    systemParts.push("Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples.");
     systemParts.push(
       "When the user says they'll play a role (e.g. 'Play as: Patient'), immediately start roleplaying as the other character from the dialogue. "
       + "Do NOT ask what they want to practice — just begin the roleplay conversation. "
       + "If they choose 'Play as: Yourself', be the Italian tutor helping them practice naturally."
     );
   } else {
+    systemParts.push("Guidelines: Respond in Italian.");
     systemParts.push(
-      "Guidelines: Respond in Italian. After any sentence that may need clarification, append [t]English translation[/t]. "
-      + "Do not use parentheses for translations. "
-      + "Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples. "
-      + "Keep responses concise (2-4 sentences)."
+      "CRITICAL: ALWAYS append [t]English translation[t] after EVERY Italian sentence. "
+      + "Example: 'Oggi fa bel tempo. Andiamo al parco? [t]The weather is nice today. Shall we go to the park?[t]' "
+      + "Do not use parentheses for translations."
     );
+    systemParts.push("Stay focused on Italian practice. Do NOT switch to unrelated conversations.");
+    systemParts.push("Correct mistakes gently. Be encouraging. If the user asks about a word, explain its usage with examples.");
     systemParts.push(
       "You are ONLY an Italian language tutor. Do NOT answer questions unrelated to Italian language learning or Italian culture. "
       + "If the user asks about something off-topic, gently redirect them back to Italian practice. "

@@ -304,7 +304,7 @@ export default function ExperiencePlayerPage() {
     if (completed && data) {
       fetch(`/api/content/experience/${data.id}`).then((r) => r.json()).then((d) => {
         if (d?.vocabulary?.length) setVocabWords(d.vocabulary);
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [completed, data]);
 
@@ -401,7 +401,7 @@ export default function ExperiencePlayerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wordIds: [...selectedWordIds] }),
       });
-    } catch {}
+    } catch { }
     router.push("/home");
   };
 
@@ -426,7 +426,7 @@ export default function ExperiencePlayerPage() {
               <h3 className="font-bold text-on-surface mb-1">Add words to your vocabulary</h3>
               <p className="text-xs text-on-surface-variant mb-4">Select words you want to practice later:</p>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {vocabWords.map((vw) => (
+                {vocabWords.map((vw) => (
                   <label key={vw.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
                     <input
                       type="checkbox"
@@ -519,11 +519,10 @@ export default function ExperiencePlayerPage() {
                 return (
                   <div
                     key={i}
-                    className={`w-1.5 rounded-t-full transition-all duration-300 ${
-                      isPlayed
+                    className={`w-1.5 rounded-t-full transition-all duration-300 ${isPlayed
                         ? `bg-primary ${isPlaying ? "animate-eq" : ""}`
                         : "bg-primary/20"
-                    }`}
+                      }`}
                     style={{
                       height: `${baseHeight}%`,
                       animationDelay: `${(i % 6) * 0.1}s`,
@@ -840,7 +839,7 @@ export default function ExperiencePlayerPage() {
             >
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">auto_awesome</span>
-                <h4 className="font-headline text-lg text-on-surface">Practice with AI Tutor</h4>
+                <h4 className="font-headline text-lg text-on-surface">Practice with AI Tutor (Optional)</h4>
               </div>
               <span className={`material-symbols-outlined transition-transform ${showAiChat ? "rotate-180" : ""}`}>
                 expand_more
@@ -850,6 +849,7 @@ export default function ExperiencePlayerPage() {
               <div className="mt-4 min-h-[300px]">
                 <ChatUI
                   context={{ experienceId: data.id }}
+                  experienceTitle={data.title}
                   roleSuggestions={[...new Set(data.transcripts.map(t => t.speaker).filter(Boolean))] as string[]}
                   placeholder="Type your response in Italian..."
                 />

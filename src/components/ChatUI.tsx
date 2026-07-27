@@ -10,22 +10,21 @@ interface Message {
 
 interface Props {
   context?: { experienceId?: number };
+  experienceTitle?: string;
   welcomeMessage?: string;
   placeholder?: string;
   suggestions?: string[];
   roleSuggestions?: string[];
 }
 
-type TtsLang = "it-IT" | "de-DE";
-
-function speak(text: string, lang: TtsLang, onEnd?: () => void) {
+function speak(text: string, onEnd?: () => void) {
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
+  utterance.lang = "it-IT";
   utterance.rate = 0.9;
   utterance.pitch = 1.1;
   const voices = window.speechSynthesis.getVoices();
-  const voice = voices.find(v => v.lang.startsWith(lang.slice(0, 2)));
+  const voice = voices.find(v => v.lang.startsWith("it"));
   if (voice) utterance.voice = voice;
   if (onEnd) utterance.onend = onEnd;
   window.speechSynthesis.speak(utterance);
@@ -37,36 +36,32 @@ function stopSpeaking() {
 
 function parseMessage(content: string): { italian: string; translation: string } {
   const parts: string[] = [];
-  const italian = content.replace(/\[t\](.*?)\[\/t\]/g, (_, t) => {
+  const italian = content.replace(/\[t\](.*?)\[\/?t\]/g, (_, t) => {
     parts.push(t);
     return "";
   }).trim();
   return { italian, translation: parts.join("; ") };
 }
 
-export function ChatUI({ context, welcomeMessage, placeholder, suggestions, roleSuggestions }: Props) {
+export function ChatUI({ context, experienceTitle, welcomeMessage, placeholder, suggestions, roleSuggestions }: Props) {
   const [messages, setMessages] = useState<Message[]>(() => {
     const initial: Message[] = [];
-    if (roleSuggestions?.length) {
-      // no welcome message — role chips serve as the welcome
-    } else if (welcomeMessage) {
+    if (welcomeMessage) {
       initial.push({ role: "assistant", content: welcomeMessage });
-    } else {
-      initial.push({
-        role: "assistant",
-        content: "Ciao! I'm your Italian tutor. Ask me anything — practice conversation, grammar, or vocabulary. "
-          + (context?.experienceId ? "I see you just finished an experience — want to roleplay it together?" : ""),
-      });
+    } else if (experienceTitle) {
+      initial.push({ role: "assistant", content: `Ciao! Ready to practice "${experienceTitle}"?` });
+    } else if (!roleSuggestions?.length) {
+      initial.push({ role: "assistant", content: "Ciao! I'm your Italian tutor! Ready to practice?" });
     }
     return initial;
   });
   const [showRolePicker, setShowRolePicker] = useState(!!roleSuggestions?.length);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const [listening, setListening] = useState(false);
-  const [ttsLang, setTtsLang] = useState<TtsLang>("it-IT");
   const [expandedTranslations, setExpandedTranslations] = useState<Record<number, boolean>>({});
+  const toggleTranslation = (i: number) => setExpandedTranslations((prev) => ({ ...prev, [i]: !prev[i] }));
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -160,18 +155,14 @@ export function ChatUI({ context, welcomeMessage, placeholder, suggestions, role
     recognition.start();
   };
 
-  const handlePlay = (text: string) => {
-    if (speaking) {
+  const handlePlay = (text: string, index: number) => {
+    if (speakingIndex === index) {
       stopSpeaking();
-      setSpeaking(false);
+      setSpeakingIndex(null);
     } else {
-      setSpeaking(true);
-      speak(parseMessage(text).italian, ttsLang, () => setSpeaking(false));
+      setSpeakingIndex(index);
+      speak(parseMessage(text).italian, () => setSpeakingIndex(null));
     }
-  };
-
-  const toggleTranslation = (idx: number) => {
-    setExpandedTranslations((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
 
   return (
@@ -194,46 +185,29 @@ export function ChatUI({ context, welcomeMessage, placeholder, suggestions, role
               >
                 <p>{parsed ? parsed.italian : msg.content}</p>
 
-                {parsed && parsed.translation && (
-                  <div className="mt-1">
-                    <button
-                      onClick={() => toggleTranslation(i)}
-                      className="text-xs text-primary font-medium flex items-center gap-1 hover:underline"
-                    >
-                      <span className="material-symbols-outlined text-sm">
-                        {expandedTranslations[i] ? "expand_less" : "expand_more"}
-                      </span>
-                      {expandedTranslations[i] ? "Hide meaning" : "Show meaning"}
-                    </button>
-                    {expandedTranslations[i] && (
-                      <p className="mt-1 text-xs text-on-surface-variant italic border-l-2 border-outline-variant pl-2">
-                        {parsed.translation}
-                      </p>
-                    )}
-                  </div>
+                {parsed && parsed.translation && expandedTranslations[i] && (
+                  <p className="mt-1.5 text-xs text-on-surface-variant italic border-l-2 border-outline-variant pl-2">
+                    {parsed.translation}
+                  </p>
                 )}
 
                 {msg.role === "assistant" && (
                   <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-outline-variant/10">
                     <button
-                      onClick={() => handlePlay(msg.content)}
-                      className="flex items-center gap-1 text-xs text-primary font-medium hover:underline"
-                      title={speaking ? "Stop" : "Listen"}
+                      onClick={() => toggleTranslation(i)}
+                      className="text-xs text-primary font-medium hover:underline"
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        {speaking ? "stop_circle" : "play_circle"}
-                      </span>
-                      {speaking ? "Stop" : "Listen"}
+                      {expandedTranslations[i] ? "Hide meaning" : "Show meaning"}
                     </button>
                     <button
-                      onClick={() => setTtsLang(ttsLang === "it-IT" ? "de-DE" : "it-IT")}
-                      className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                        ttsLang === "de-DE"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-surface-container-high text-on-surface-variant"
-                      }`}
+                      onClick={() => handlePlay(msg.content, i)}
+                      className="flex items-center gap-1 text-xs text-primary font-medium hover:underline"
+                      title={speakingIndex === i ? "Stop" : "Listen"}
                     >
-                      {ttsLang === "it-IT" ? "IT" : "DE"}
+                      <span className="material-symbols-outlined text-sm">
+                        {speakingIndex === i ? "stop_circle" : "play_circle"}
+                      </span>
+                      {speakingIndex === i ? "Stop" : "Listen"}
                     </button>
                   </div>
                 )}
