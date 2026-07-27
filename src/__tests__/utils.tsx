@@ -2,14 +2,11 @@ import { render, RenderOptions } from "@testing-library/react";
 import { ReactElement } from "react";
 import { SessionProvider } from "next-auth/react";
 import { StatsProvider } from "@/lib/stats-context";
-import { ContentProvider } from "@/lib/content-context";
 
 function AllProviders({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <StatsProvider>
-        <ContentProvider>{children}</ContentProvider>
-      </StatsProvider>
+      <StatsProvider>{children}</StatsProvider>
     </SessionProvider>
   );
 }

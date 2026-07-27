@@ -4,28 +4,22 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Logo } from "@/components/Logo";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useProfileStore } from "@/lib/stores/profile-store";
 
 const LEVELS = ["A1", "A2", "B1", "B2"] as const;
 
 export default function ProfilePage() {
   const { data: session } = useSession();
+  const { cefrLevel, fetch: fetchProfile, updateCefr } = useProfileStore();
   const [showLogout, setShowLogout] = useState(false);
-  const [savedLevel, setSavedLevel] = useState<string | null>(null);
-  const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [savedLevel, setSavedLevel] = useState<string>(cefrLevel);
+  const [selectedLevel, setSelectedLevel] = useState<string>(cefrLevel);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/user/profile")
-      .then((r) => r.json())
-      .then((u) => {
-        if (u.cefrLevel) {
-          setSavedLevel(u.cefrLevel);
-          setSelectedLevel(u.cefrLevel);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+  useEffect(() => { setSavedLevel(cefrLevel); setSelectedLevel(cefrLevel); }, [cefrLevel]);
 
   const isDirty = selectedLevel !== savedLevel;
 
@@ -34,16 +28,10 @@ export default function ProfilePage() {
     setSaving(true);
     setSaved(false);
     try {
-      const res = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cefrLevel: selectedLevel }),
-      });
-      if (res.ok) {
-        setSavedLevel(selectedLevel);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2500);
-      }
+      await updateCefr(selectedLevel);
+      setSavedLevel(selectedLevel);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
     } catch {}
     setSaving(false);
   };

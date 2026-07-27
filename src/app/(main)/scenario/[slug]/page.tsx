@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useStats } from "@/lib/stats-context";
-import { useContent } from "@/lib/content-context";
+import { useContentStore } from "@/lib/stores/content-store";
+import { useProfileStore } from "@/lib/stores/profile-store";
 import { HeroMedia } from "@/components/HeroMedia";
 
 interface ScenarioData {
@@ -36,13 +37,19 @@ export default function ScenarioDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: session, status } = useSession();
   const { refreshStats } = useStats();
-  const { content: rawData, getScenarioBySlug, loaded } = useContent();
+  const { getScenarioBySlug, fetch: fetchContent } = useContentStore();
+  const { cefrLevel, scenarioLevels, fetch: fetchProfile } = useProfileStore();
   const found = getScenarioBySlug(slug) as ScenarioData | null;
   const [data, setData] = useState<ScenarioData | null>(null);
   const [activeLevel, setActiveLevel] = useState(2);
   const [expProgress, setExpProgress] = useState<Record<number, { completed: boolean; lessonXpClaimed: boolean; bonusXpClaimed: boolean }>>({});
   const [showLevelDropdown, setShowLevelDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchContent();
+    fetchProfile();
+  }, [fetchContent, fetchProfile]);
 
   useEffect(() => {
     if (found) setData(found);
@@ -53,14 +60,8 @@ export default function ScenarioDetailPage() {
     if (!data) return;
 
     // Resolve level once: saved setting > profile CEFR > default B1
-    let levelId = 2;
-    Promise.all([
-      fetch(`/api/user/scenario-setting?scenarioId=${data.id}`).then((r) => r.json()),
-      fetch("/api/user/profile").then((r) => r.json()),
-    ]).then(([settingRes, profileRes]) => {
-      levelId = settingRes.selectedLevelId || LEVEL_MAP[profileRes.cefrLevel] || 2;
-      setActiveLevel(levelId);
-    }).catch(() => {});
+    const levelId = LEVEL_MAP[scenarioLevels[data.id]] || LEVEL_MAP[cefrLevel] || 2;
+    setActiveLevel(levelId);
 
     // Collect all experience IDs and fetch progress
     const expIds = new Set<number>();
@@ -74,7 +75,7 @@ export default function ScenarioDetailPage() {
         .then((r) => r.json()).then(setExpProgress).catch(() => {});
     }
     refreshStats();
-  }, [status, data]);
+  }, [status, data, scenarioLevels]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {

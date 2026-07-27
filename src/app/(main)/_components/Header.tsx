@@ -4,12 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
-import { TeacherAvatar } from "@/components/TeacherAvatar";
 
 const navItems = [
-  { href: "/home", label: "Home", icon: "grid_view" },
+  { href: "/home", label: "Home", icon: "home" },
   { href: "/tutor", label: "AI Tutor", icon: "auto_awesome" },
-  { href: "/vocabulary", label: "Vocab", icon: "style" },
+  { href: "/vocabulary", label: "Vocab", icon: "menu_book" },
   { href: "/progress", label: "Stats", icon: "insights" },
   { href: "/profile", label: "Profile", icon: "person" },
 ];
@@ -30,15 +29,6 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* AI Teacher Avatar Status Badge */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low border border-outline-variant/20 text-xs text-on-surface-variant">
-            <div className="relative">
-              <TeacherAvatar size={24} />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-            </div>
-            <span className="font-medium">AI Coach Active</span>
-          </div>
-
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1.5 ml-2">
             {navItems.map((item) => {
@@ -47,16 +37,14 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    active
-                      ? "bg-primary/10 text-primary border border-primary/20 shadow-xs"
-                      : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low"
-                  }`}
+                  className={`relative flex items-center gap-2 px-2.5 py-2  text-sm font-semibold transition-all duration-200 ${active
+                    ? " text-primary"
+                    : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low"
+                    }`}
                 >
                   <span
-                    className={`material-symbols-outlined text-[20px] transition-transform duration-200 ${
-                      active ? "text-primary scale-110" : "text-on-surface-variant"
-                    }`}
+                    className={`material-symbols-outlined text-[20px] transition-transform duration-200 ${active ? "text-primary scale-110" : "text-on-surface-variant"
+                      }`}
                     style={active ? { fontVariationSettings: "'FILL' 1" } : undefined}
                   >
                     {item.icon}

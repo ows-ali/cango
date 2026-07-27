@@ -44,6 +44,18 @@ async function main() {
     await page.goto("http://localhost:3000/", { waitUntil: "networkidle" });
     await captureViewports(page, "landing");
 
+    console.log("Navigating to http://localhost:3000/onboarding/welcome...");
+    await page.goto("http://localhost:3000/onboarding/welcome", { waitUntil: "networkidle" });
+    await captureViewports(page, "onboarding_welcome");
+
+    console.log("Navigating to http://localhost:3000/onboarding/level...");
+    await page.goto("http://localhost:3000/onboarding/level", { waitUntil: "networkidle" });
+    await captureViewports(page, "onboarding_level");
+
+    console.log("Navigating to http://localhost:3000/onboarding/goals...");
+    await page.goto("http://localhost:3000/onboarding/goals", { waitUntil: "networkidle" });
+    await captureViewports(page, "onboarding_goals");
+
     console.log("Navigating to http://localhost:3000/auth...");
     await page.goto("http://localhost:3000/auth", { waitUntil: "networkidle" });
     
@@ -60,10 +72,10 @@ async function main() {
     
     await page.waitForTimeout(2000);
     
-    // If still on auth page, try direct navigation
-    if (page.url().includes("/auth")) {
+    // If redirected to auth or onboarding, navigate directly to /home
+    if (page.url().includes("/auth") || page.url().includes("/onboarding")) {
       console.log("Navigating directly to /home...");
-      await page.goto("http://localhost:3000/home", { waitUntil: "networkidle" });
+      await page.goto("http://localhost:3000/home", { waitUntil: "load" });
     }
     
     // Wait a couple of seconds to ensure page content loads fully

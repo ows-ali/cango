@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ChatUI } from "@/components/ChatUI";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
-import { useContent } from "@/lib/content-context";
+import { useContentStore } from "@/lib/stores/content-store";
+import { useProfileStore } from "@/lib/stores/profile-store";
 
 interface CompletedData {
   scenarios: { slug: string; name: string }[];
@@ -12,33 +13,18 @@ interface CompletedData {
 }
 
 export default function TutorPage() {
-  const { data: session, status } = useSession();
-  const { content: rawScenarios, loaded: contentLoaded } = useContent();
-  const [cefr, setCefr] = useState<string>("B1");
+  const { fetch: fetchContent } = useContentStore();
+  const { cefrLevel: cefr, fetch: fetchProfile } = useProfileStore();
   const [completed, setCompleted] = useState<CompletedData>({ scenarios: [], count: 0 });
-  const [ready, setReady] = useState(false);
+
+  useEffect(() => { fetchContent(); fetchProfile(); }, [fetchContent, fetchProfile]);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
-
-    fetch("/api/user/profile")
-      .then((r) => r.json())
-      .then((u) => {
-        if (u.cefrLevel) setCefr(u.cefrLevel);
-      })
-      .catch(() => {});
-
     fetch("/api/user/experience/completed")
       .then((r) => r.json())
       .then((data) => setCompleted(data))
       .catch(() => {});
-  }, [status]);
-
-  useEffect(() => {
-    if (contentLoaded && completed) {
-      setReady(true);
-    }
-  }, [contentLoaded, completed]);
+  }, []);
 
   const suggestions: string[] = [];
 
@@ -76,7 +62,7 @@ export default function TutorPage() {
           <ChatUI
             welcomeMessage={welcomeMessage}
             placeholder="Type your message or pick a suggestion above..."
-            suggestions={ready ? suggestions : undefined}
+            suggestions={suggestions}
           />
         </div>
       </div>

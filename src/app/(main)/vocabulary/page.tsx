@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useEffect, useState, useRef } from "react";
 import { VocabWordModal } from "@/components/VocabWordModal";
 import { VocabAddModal } from "@/components/VocabAddModal";
+import { useVocabStore } from "@/lib/stores/vocab-store";
 
 interface VocabWord {
   wordId: number;
@@ -41,38 +41,16 @@ const STATUS_COLUMNS: { key: "learning" | "review" | "mastered"; label: string; 
 ];
 
 export default function VocabPage() {
-  const { data: session, status } = useSession();
-  const [words, setWords] = useState<VocabWord[]>([]);
+  const { words, loaded, fetch: fetchVocab, updateStatus, updateWord, deleteWord, refresh } = useVocabStore();
   const [filterScenario, setFilterScenario] = useState<number | "all">("all");
-  const [loading, setLoading] = useState(true);
   const [selectedWord, setSelectedWord] = useState<VocabWord | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const dragItem = useRef<VocabWord | null>(null);
 
-  const fetchWords = useCallback(async () => {
-    if (status !== "authenticated") return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/vocabulary");
-      const data = await res.json();
-      setWords(data.words || []);
-    } catch {}
-    setLoading(false);
-  }, [status]);
-
-  useEffect(() => {
-    fetchWords();
-  }, [fetchWords]);
+  useEffect(() => { fetchVocab(); }, [fetchVocab]);
 
   const handleStatusChange = async (wordId: number, newStatus: "learning" | "review" | "mastered") => {
-    setWords((prev) =>
-      prev.map((w) => (w.wordId === wordId ? { ...w, status: newStatus } : w))
-    );
-    await fetch("/api/vocabulary", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wordId, status: newStatus }),
-    });
+    await updateStatus(wordId, newStatus);
   };
 
   const handleDragStart = (word: VocabWord) => {
@@ -87,19 +65,17 @@ export default function VocabPage() {
   };
 
   const handleWordUpdated = (wordId: number, updates: { status?: string; notes?: string; scenarioId?: number | null }) => {
-    setWords((prev) =>
-      prev.map((w) => (w.wordId === wordId ? { ...w, ...updates } as VocabWord : w))
-    );
+    updateWord(wordId, updates);
   };
 
   const handleWordDeleted = (wordId: number) => {
-    setWords((prev) => prev.filter((w) => w.wordId !== wordId));
+    deleteWord(wordId);
     setSelectedWord(null);
   };
 
   const handleWordAdded = () => {
     setShowAddModal(false);
-    fetchWords();
+    refresh();
   };
 
   const filteredWords = filterScenario === "all"
@@ -160,7 +136,7 @@ export default function VocabPage() {
         </div>
 
         {/* Loading */}
-        {loading && (
+        {!loaded && (
           <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto pb-4">
             {[1, 2, 3].map((col) => (
               <div key={col} className="w-full md:min-w-[260px] md:flex-1 bg-surface-container rounded-xl p-4 animate-pulse space-y-3">
@@ -174,7 +150,7 @@ export default function VocabPage() {
         )}
 
         {/* Empty state */}
-        {!loading && filteredWordsCount === 0 && (
+        {loaded && filteredWordsCount === 0 && (
           <div className="text-center py-16">
             <span className="material-symbols-outlined text-5xl text-outline-variant mb-3">menu_book</span>
             <h3 className="text-lg font-bold text-on-surface mb-1">No words yet</h3>
@@ -195,7 +171,7 @@ export default function VocabPage() {
         )}
 
         {/* Kanban columns */}
-        {!loading && filteredWordsCount > 0 && (
+        {loaded && filteredWordsCount > 0 && (
           <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
             {sections.map((section) => (
               <div

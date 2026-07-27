@@ -1,52 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { useContent } from "@/lib/content-context";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
-
+import { useContentStore } from "@/lib/stores/content-store";
+import { useProfileStore } from "@/lib/stores/profile-store";
 import { getScenarioMedia } from "@/lib/scenario-media";
 
 interface Scenario {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  imageUrl: string | null;
+  id: number; slug: string; name: string;
+  description: string | null; imageUrl: string | null;
   levels?: { level: { id: number; name: string } }[];
 }
 
 const LEVEL_MAP: Record<string, number> = { A1: 4, A2: 1, B1: 2, B2: 3 };
-const REVERSE_LEVEL_MAP: Record<number, string> = { 4: "A1", 1: "A2", 2: "B1", 3: "B2" };
 
 export default function HomePage() {
-  const { data: session, status } = useSession();
-  const { content: rawScenarios, loaded } = useContent();
-  const scenarios = (rawScenarios as Scenario[]) || [];
-  const [userLevel, setUserLevel] = useState<string>("B1");
-  const [scenarioLevels, setScenarioLevels] = useState<Record<number, string>>({});
+  const { scenarios, loaded, fetch: fetchContent } = useContentStore();
+  const { cefrLevel: userLevel, scenarioLevels, fetch: fetchProfile } = useProfileStore();
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
-    fetch("/api/user/profile").then((r) => r.json()).then((u) => {
-      if (u.cefrLevel) setUserLevel(u.cefrLevel);
-    }).catch(() => { });
-    if (scenarios.length > 0) {
-      const ids = scenarios.map((s) => s.id).join(",");
-      fetch(`/api/user/scenario-setting/batch?ids=${ids}`)
-        .then((r) => r.json())
-        .then((res) => {
-          const map: Record<number, string> = {};
-          for (const [id, data] of Object.entries(res)) {
-            const levelId = (data as { selectedLevelId: number | null }).selectedLevelId;
-            if (levelId && REVERSE_LEVEL_MAP[levelId]) map[Number(id)] = REVERSE_LEVEL_MAP[levelId];
-          }
-          setScenarioLevels(map);
-        }).catch(() => { });
-    }
-  }, [status, scenarios.length]);
+  useEffect(() => { fetchContent(); fetchProfile(); }, [fetchContent, fetchProfile]);
 
   return (
     <div className="min-h-screen bg-background">

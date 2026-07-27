@@ -129,9 +129,12 @@ npm run test:e2e -- --ui
 
 ## Screenshots
 
-| Mobile | Desktop |
-|--------|---------|
-| ![Landing](screenshot/mobile_landing.png) | ![Landing](screenshot/desktop_landing.png) |
-| ![Home](screenshot/mobile_home.png) | ![Home](screenshot/desktop_home.png) |
-| ![Experience](screenshot/mobile_experience.png) | ![Experience](screenshot/desktop_experience.png) |
-| ![Scenario](screenshot/mobile_scenario.png) | ![Scenario](screenshot/desktop_scenario.png) |
+| View | Mobile | Desktop |
+|------|--------|---------|
+| **Landing Page** | ![Landing](screenshot/mobile_landing.png) | ![Landing](screenshot/desktop_landing.png) |
+| **Onboarding Welcome** | ![Onboarding Welcome](screenshot/mobile_onboarding_welcome.png) | ![Onboarding Welcome](screenshot/desktop_onboarding_welcome.png) |
+| **Level Selection** | ![Onboarding Level](screenshot/mobile_onboarding_level.png) | ![Onboarding Level](screenshot/desktop_onboarding_level.png) |
+| **Goals Selection** | ![Onboarding Goals](screenshot/mobile_onboarding_goals.png) | ![Onboarding Goals](screenshot/desktop_onboarding_goals.png) |
+| **Main Dashboard** | ![Home](screenshot/mobile_home.png) | ![Home](screenshot/desktop_home.png) |
+| **Scenario Overview** | ![Scenario](screenshot/mobile_scenario.png) | ![Scenario](screenshot/desktop_scenario.png) |
+| **Experience Player** | ![Experience](screenshot/mobile_experience.png) | ![Experience](screenshot/desktop_experience.png) |
