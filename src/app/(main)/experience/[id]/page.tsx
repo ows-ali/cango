@@ -7,6 +7,7 @@ import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
 import { ChatUI } from "@/components/ChatUI";
 import { HeroMedia } from "@/components/HeroMedia";
+import { getLang } from "@/lib/lang-config";
 
 interface TranscriptLine {
   id: number; targetText: string; translationText: string; speaker: string | null;
@@ -78,14 +79,15 @@ export default function ExperiencePlayerPage() {
   const [selectedWordIds, setSelectedWordIds] = useState<Set<number>>(new Set());
   const [addingVocab, setAddingVocab] = useState(false);
   const waveformRef = useRef<HTMLDivElement>(null);
-  const italianVoices = useRef<SpeechSynthesisVoice[]>([]);
+  const langCode = getLang().code;
+  const voices = useRef<SpeechSynthesisVoice[]>([]);
   const femaleRoles = ["ticket_agent", "shop_assistant", "doctor", "receptionist", "waiter", "nurse", "pharmacist"];
 
   useEffect(() => {
     if ("speechSynthesis" in window) speechSynthesis.cancel();
-    if (italianVoices.current.length > 0 || !("speechSynthesis" in window)) return;
+    if (voices.current.length > 0 || !("speechSynthesis" in window)) return;
     const load = () => {
-      italianVoices.current = speechSynthesis.getVoices().filter((v) => v.lang.startsWith("it"));
+      voices.current = speechSynthesis.getVoices().filter((v) => v.lang.startsWith(langCode));
     };
     load();
     speechSynthesis.onvoiceschanged = load;
@@ -201,11 +203,11 @@ export default function ExperiencePlayerPage() {
   }, [isPlaying, totalSeconds]);
 
   function getVoiceForSpeaker(speaker: string | null): SpeechSynthesisVoice | null {
-    const voices = italianVoices.current;
-    if (voices.length === 0) return null;
-    if (!speaker) return voices[0];
-    const idx = femaleRoles.includes(speaker) ? 0 : Math.min(1, voices.length - 1);
-    return voices[idx] ?? voices[0];
+    const v = voices.current;
+    if (v.length === 0) return null;
+    if (!speaker) return v[0];
+    const idx = femaleRoles.includes(speaker) ? 0 : Math.min(1, v.length - 1);
+    return v[idx] ?? v[0];
   }
 
   function speakerLabel(speaker: string): string {
@@ -226,7 +228,7 @@ export default function ExperiencePlayerPage() {
     const line = data.transcripts[index];
     if (!("speechSynthesis" in window)) return;
     const utterance = new SpeechSynthesisUtterance(line.targetText);
-    utterance.lang = "it-IT";
+    utterance.lang = getLang().locale;
     utterance.rate = 0.85;
     const voice = getVoiceForSpeaker(line.speaker);
     if (voice) utterance.voice = voice;
@@ -851,7 +853,7 @@ export default function ExperiencePlayerPage() {
                   context={{ experienceId: data.id }}
                   experienceTitle={data.title}
                   roleSuggestions={[...new Set(data.transcripts.map(t => t.speaker).filter(Boolean))] as string[]}
-                  placeholder="Type your response in Italian..."
+                  placeholder={`Type your response in ${getLang().label}...`}
                 />
               </div>
             )}

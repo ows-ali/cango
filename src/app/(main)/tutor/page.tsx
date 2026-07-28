@@ -6,6 +6,7 @@ import { ChatUI } from "@/components/ChatUI";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { useContentStore } from "@/lib/stores/content-store";
 import { useProfileStore } from "@/lib/stores/profile-store";
+import { getLang } from "@/lib/lang-config";
 
 interface CompletedData {
   scenarios: { slug: string; name: string }[];
@@ -42,7 +43,8 @@ export default function TutorPage() {
       ? completed.scenarios.map((s) => s.name).join(", ")
       : "";
 
-  const welcomeMessage = `Ciao! Ready to practice at ${cefr} level? What would you like to do?`;
+  const config = getLang();
+  const welcomeMessage = `${config.greetingFallback}! Ready to practice at ${cefr} level? What would you like to do?`;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -52,11 +54,11 @@ export default function TutorPage() {
           <div className="min-w-0">
             <h1 className="font-headline text-2xl text-on-primary-container font-bold">AI Tutor</h1>
             <p className="text-sm text-on-primary-container/80">
-              Practice Italian conversation, ask about grammar, or roleplay any scenario.
+              Practice {config.label} conversation, ask about grammar, or roleplay any scenario.
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-outline-variant/30 p-4 shadow-sm min-h-[500px]">
+        <div className="bg-white rounded-2xl border border-outline-variant/30 p-4 shadow-sm h-[calc(100vh-260px)] flex flex-col">
           <ChatUI
             welcomeMessage={welcomeMessage}
             placeholder="Type your message or pick a suggestion above..."

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Logo } from "@/components/Logo";
+import { getLang } from "@/lib/lang-config";
 
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false);
@@ -13,13 +14,15 @@ export default function WelcomePage() {
 
   if (!mounted) return null;
 
+  const config = getLang();
+
   return (
     <div className="min-h-screen bg-[#070d18] text-white flex flex-col justify-between relative overflow-hidden font-body selection:bg-primary selection:text-white">
       {/* Ambient background glow & photographic overlay */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <img
           src="/images/scenario-restaurant.jpg"
-          alt="Italy background"
+          alt={`${config.country} background`}
           className="w-full h-full object-cover opacity-20 filter blur-sm scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070d18]/90 via-[#070d18]/95 to-[#070d18]" />
@@ -35,7 +38,7 @@ export default function WelcomePage() {
         <div className="flex items-center gap-3">
           <Logo size={40} />
           <span className="text-xs font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 hidden sm:inline-block">
-            Italy Experience Platform
+            {getLang().learnFor}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -64,15 +67,15 @@ export default function WelcomePage() {
 
         {/* Hero Title */}
         <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl leading-[1.1] mb-6 drop-shadow-md">
-          Learn Italian for{" "}
+          Learn {config.label} for{" "}
           <span className="bg-gradient-to-r from-amber-200 via-orange-400 to-rose-400 bg-clip-text text-transparent">
-            Real Life in Italy
+            Real Life in {config.country}
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
-          Practice realistic everyday scenarios you will actually face. Built for professionals, expats, and students navigating Italian transport, healthcare, housing, and dining.
+          Practice realistic everyday scenarios you will actually face. Built for professionals, expats, and students navigating {config.label} transport, healthcare, housing, and dining.
         </p>
 
         {/* Primary CTA Buttons */}
@@ -110,7 +113,7 @@ export default function WelcomePage() {
               </div>
             </div>
             <h3 className="font-headline font-bold text-base text-white mb-1">Transportation</h3>
-            <p className="text-xs text-slate-400 line-clamp-2">Tickets, train delays, and platform changes at Italian stations.</p>
+            <p className="text-xs text-slate-400 line-clamp-2">Tickets, train delays, and platform changes.</p>
           </div>
 
           {/* Card 2 */}
@@ -167,8 +170,8 @@ export default function WelcomePage() {
       <footer className="relative z-30 border-t border-white/10 py-6 px-6">
         <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-white">CanGo Italy</span>
-            <span>&bull; Realistic Italian Language Practice</span>
+            <span className="font-bold text-white">{config.brand}</span>
+            <span>&bull; Realistic {config.label} Language Practice</span>
           </div>
 
           <div className="flex items-center gap-6 text-slate-400">

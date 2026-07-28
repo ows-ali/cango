@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Logo } from "@/components/Logo";
+import { getLang } from "@/lib/lang-config";
 
 const GOALS = [
   { key: "study", label: "Study", icon: "school" },
@@ -38,7 +40,7 @@ export default function GoalsPage() {
             <div className="w-3/4 h-full bg-primary rounded-full transition-all duration-500" />
           </div>
           <h1 className="text-2xl font-bold text-on-surface mb-2" style={{ fontFamily: "Manrope, sans-serif" }}>
-            What are your goals in Italy?
+            What are your goals in {getLang().country}?
           </h1>
           <p className="text-on-surface-variant" style={{ fontFamily: "Inter, sans-serif", fontSize: "16px", lineHeight: "24px" }}>
             Select all that apply to personalize your learning journey.

@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { TeacherAvatar } from "./TeacherAvatar";
+import { getLang } from "@/lib/lang-config";
+
+const config = typeof window !== "undefined" ? getLang() : null;
 
 interface Message {
   role: "user" | "assistant";
@@ -17,14 +20,14 @@ interface Props {
   roleSuggestions?: string[];
 }
 
-function speak(text: string, onEnd?: () => void) {
+function speak(text: string, locale: string, code: string, onEnd?: () => void) {
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "it-IT";
+  utterance.lang = locale;
   utterance.rate = 0.9;
   utterance.pitch = 1.1;
   const voices = window.speechSynthesis.getVoices();
-  const voice = voices.find(v => v.lang.startsWith("it"));
+  const voice = voices.find(v => v.lang.startsWith(code));
   if (voice) utterance.voice = voice;
   if (onEnd) utterance.onend = onEnd;
   window.speechSynthesis.speak(utterance);
@@ -49,9 +52,10 @@ export function ChatUI({ context, experienceTitle, welcomeMessage, placeholder, 
     if (welcomeMessage) {
       initial.push({ role: "assistant", content: welcomeMessage });
     } else if (experienceTitle) {
-      initial.push({ role: "assistant", content: `Ciao! Ready to practice "${experienceTitle}"?` });
+      const greeting = getLang().greetingFallback;
+      initial.push({ role: "assistant", content: `${greeting} Ready to practice "${experienceTitle}"?` });
     } else if (!roleSuggestions?.length) {
-      initial.push({ role: "assistant", content: "Ciao! I'm your Italian tutor! Ready to practice?" });
+      initial.push({ role: "assistant", content: getLang().defaultWelcome });
     }
     return initial;
   });
@@ -113,6 +117,14 @@ export function ChatUI({ context, experienceTitle, welcomeMessage, placeholder, 
           return copy;
         });
       }
+
+      if (reply.trim()) {
+        const c = getLang();
+        const parsed = parseMessage(reply);
+        const assistantIndex = messages.length + 1;
+        setSpeakingIndex(assistantIndex);
+        speak(parsed.italian, c.locale, c.code, () => setSpeakingIndex(null));
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -138,8 +150,9 @@ export function ChatUI({ context, experienceTitle, welcomeMessage, placeholder, 
 
     if (listening) return;
 
+    const c = getLang();
     const recognition = new SpeechRecognition();
-    recognition.lang = "it-IT";
+    recognition.lang = c.locale;
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -160,8 +173,9 @@ export function ChatUI({ context, experienceTitle, welcomeMessage, placeholder, 
       stopSpeaking();
       setSpeakingIndex(null);
     } else {
+      const c = getLang();
       setSpeakingIndex(index);
-      speak(parseMessage(text).italian, () => setSpeakingIndex(null));
+      speak(parseMessage(text).italian, c.locale, c.code, () => setSpeakingIndex(null));
     }
   };
 
@@ -235,7 +249,7 @@ export function ChatUI({ context, experienceTitle, welcomeMessage, placeholder, 
       {/* Role picker (experience chat, first load) */}
       {showRolePicker && roleSuggestions && roleSuggestions.length > 0 && !loading && (
         <div className="pt-2 pb-1">
-          <p className="text-xs text-on-surface-variant font-medium mb-2">Ciao! Pick a role to practice:</p>
+          <p className="text-xs text-on-surface-variant font-medium mb-2">{getLang().roleLabel}</p>
           <div className="flex flex-wrap gap-2">
             {["Play as: Yourself", ...roleSuggestions.map((r) => `Play as: ${r}`)].map((s, i) => (
               <button
@@ -287,7 +301,7 @@ export function ChatUI({ context, experienceTitle, welcomeMessage, placeholder, 
               ? "bg-error text-on-error animate-pulse"
               : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
           } disabled:opacity-50`}
-          title="Speak in Italian"
+          title={getLang().speakLabel}
         >
           <span className="material-symbols-outlined text-lg">
             {listening ? "mic" : "mic_none"}

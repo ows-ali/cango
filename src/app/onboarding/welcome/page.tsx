@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
+import { getLang } from "@/lib/lang-config";
 
 export default function WelcomePage() {
   const router = useRouter();
+  const config = getLang();
 
   return (
     <div className="min-h-screen bg-[#070d18] text-white flex flex-col justify-between relative overflow-hidden font-body">
@@ -24,18 +26,18 @@ export default function WelcomePage() {
       {/* Content */}
       <main className="relative z-30 flex flex-col items-center justify-center px-6 text-center max-w-2xl mx-auto flex-grow mb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md text-xs font-semibold text-amber-300 my-6">
-          <span>✨ Welcome to CanGo Italy</span>
+          <span>✨ Welcome to {config.brand}</span>
         </div>
 
         <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-          Learn Italian for{" "}
+          Learn {config.label} for{" "}
           <span className="bg-gradient-to-r from-amber-200 via-orange-400 to-rose-400 bg-clip-text text-transparent">
-            Real Life in Italy
+            Real Life in {config.country}
           </span>
         </h1>
 
         <p className="text-base sm:text-lg text-slate-300 max-w-lg mx-auto font-normal leading-relaxed">
-          Esercitati con scenari realistici che affronti davvero. Pensato per professionisti e studenti in Italia.
+          Practice with realistic scenarios you will actually face. Built for professionals and students in {config.country}.
         </p>
       </main>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
+import { getLang } from "@/lib/lang-config";
 
 const navItems = [
   { href: "/home", label: "Home", icon: "home" },
@@ -25,7 +26,7 @@ export default function Header() {
           <Link href="/home" className="flex items-center gap-2 group transition-transform active:scale-95">
             <Logo size={42} className="group-hover:scale-105 transition-transform" />
             <span className="font-headline font-extrabold text-lg text-on-surface tracking-tight hidden sm:inline-block">
-              CanGo <span className="text-primary font-black">Italy</span>
+              {getLang().brand}
             </span>
           </Link>
 

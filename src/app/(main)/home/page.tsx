@@ -7,6 +7,7 @@ import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { useContentStore } from "@/lib/stores/content-store";
 import { useProfileStore } from "@/lib/stores/profile-store";
 import { getScenarioMedia } from "@/lib/scenario-media";
+import { getLang } from "@/lib/lang-config";
 
 interface Scenario {
   id: number; slug: string; name: string;
@@ -30,17 +31,17 @@ export default function HomePage() {
         <section className="mb-8 flex items-start gap-4 bg-primary-container rounded-2xl p-5">
           <TeacherAvatar size={72} className="shrink-0" />
           <div className="min-w-0">
-            <h1 className="font-headline text-3xl md:text-4xl text-on-primary-container mb-1">Buongiorno!</h1>
-            <p className="text-lg text-on-primary-container/90 mb-2">Ready to master your next Italy experience today?</p>
+            <h1 className="font-headline text-3xl md:text-4xl text-on-primary-container mb-1">{getLang().greeting}</h1>
+            <p className="text-lg text-on-primary-container/90 mb-2">Ready to master your next {getLang().label} experience today?</p>
             <p className="text-sm italic text-on-primary-container/70">Our no experience is locked and never will be.</p>
           </div>
         </section>
 
-        {/* My Italy */}
+        {/* My {country} */}
         <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-1 h-8 bg-primary rounded-full" />
-            <h3 className="font-headline text-2xl text-on-surface">My Italy</h3>
+            <h3 className="font-headline text-2xl text-on-surface">My {getLang().country}</h3>
           </div>
 
           {!loaded && scenarios.length === 0 && (

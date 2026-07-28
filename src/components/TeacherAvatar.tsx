@@ -1,3 +1,5 @@
+import { getLang } from "@/lib/lang-config";
+
 export function TeacherAvatar({ size = 80, className = "" }: { size?: number; className?: string }) {
   return (
     <svg
@@ -7,7 +9,7 @@ export function TeacherAvatar({ size = 80, className = "" }: { size?: number; cl
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      aria-label="Your Italian teacher"
+      aria-label={getLang().teacherLabel}
     >
       {/* Hair back */}
       <path

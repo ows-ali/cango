@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
 import { PwaRegister } from "@/components/PwaRegister";
+import { getLang } from "@/lib/lang-config";
 
 import "./globals.css";
 
+const config = getLang();
+
 export const metadata: Metadata = {
-  title: "CanGo — Learn Italian for Real Life",
-  description: "Practice realistic Italian scenarios for life in Italy",
+  title: `${config.brand} — Real Life Scenarios`,
+  description: `${config.practiceDesc}`,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

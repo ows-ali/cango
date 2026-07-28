@@ -28,12 +28,12 @@ export async function addWord(target: string, english: string, article?: string,
 
 export async function addExperience(
   moduleId: number, title: string, level: number, scenario: string,
-  lines: { it: string; en: string; speaker?: string }[],
-  vocab: { it: string; en: string; article?: string; plural?: string }[],
-  mcqs: { it: string; en: string; options: { it: string; en: string; correct: boolean }[] }[],
-  matchingPairs: { it: string; en: string }[],
+  lines: { target: string; en: string; speaker?: string }[],
+  vocab: { target: string; en: string; article?: string; plural?: string }[],
+  mcqs: { target: string; en: string; options: { target: string; en: string; correct: boolean }[] }[],
+  matchingPairs: { target: string; en: string }[],
   bestResponse: { question: string; questionTranslation: string; options: { text: string; translation: string; correct: boolean }[] },
-  extraVocabPairs?: { it: string; en: string }[],
+  extraVocabPairs?: { target: string; en: string }[],
   manualVocabMatchItems?: { text: string; translation: string; correctValue: string }[],
 ) {
   const durs = ["1:15", "1:45", "2:00", "2:30", "3:00"];
@@ -78,32 +78,32 @@ export async function addExperience(
   }
 
   const transVals: (typeof transcriptLines.$inferInsert)[] = [];
-  lines.forEach((l, i) => transVals.push({ experienceId: eid, order: i + 1, targetText: l.it, translationText: l.en, speaker: l.speaker ?? null }));
+  lines.forEach((l, i) => transVals.push({ experienceId: eid, order: i + 1, targetText: l.target, translationText: l.en, speaker: l.speaker ?? null }));
   if (transVals.length) await db.insert(transcriptLines).values(transVals);
 
-  for (const v of vocab) await addWord(v.it, v.en, v.article, v.plural, eid);
+  for (const v of vocab) await addWord(v.target, v.en, v.article, v.plural, eid);
 
   for (let i = 0; i < mcqs.length; i++) {
     const [q] = await db.insert(questions).values({
-      experienceId: eid, type: "MCQ", questionText: mcqs[i].it, translationText: mcqs[i].en, order: i + 1,
+      experienceId: eid, type: "MCQ", questionText: mcqs[i].target, translationText: mcqs[i].en, order: i + 1,
     }).returning({ id: questions.id });
     await db.insert(questionOptions).values(
-      mcqs[i].options.map(o => ({ questionId: q.id, targetText: o.it, translationText: o.en, correct: o.correct }))
+      mcqs[i].options.map(o => ({ questionId: q.id, targetText: o.target, translationText: o.en, correct: o.correct }))
     );
   }
 
   if (matchingPairs.length > 0) {
     const [m] = await db.insert(questions).values({
-      experienceId: eid, type: "MATCHING", questionText: "Collega le parole",
+      experienceId: eid, type: "MATCHING", questionText: "Match the words",
       translationText: "Match the words", order: mcqs.length + 1,
     }).returning({ id: questions.id });
     await db.insert(questionOptions).values(
-      matchingPairs.map(p => ({ questionId: m.id, targetText: p.it, translationText: p.en, correct: false }))
+      matchingPairs.map(p => ({ questionId: m.id, targetText: p.target, translationText: p.en, correct: false }))
     );
   }
 
   const [ac] = await db.insert(challenges).values({ experienceId: eid, type: "ARRANGE_DIALOGUE" }).returning({ id: challenges.id });
-  await db.insert(challengeItems).values(lines.map((l, i) => ({ challengeId: ac.id, text: l.it, order: i + 1 })));
+  await db.insert(challengeItems).values(lines.map((l, i) => ({ challengeId: ac.id, text: l.target, order: i + 1 })));
 
   const [vc] = await db.insert(challenges).values({ experienceId: eid, type: "VOCAB_MATCH" }).returning({ id: challenges.id });
   if (manualVocabMatchItems) {
@@ -111,8 +111,8 @@ export async function addExperience(
   } else {
     const allPairs = [...matchingPairs, ...(extraVocabPairs || [])];
     const targetPairs = allPairs.slice(0, 5);
-    while (targetPairs.length < 5) targetPairs.push({ it: `Parola ${targetPairs.length + 1}`, en: `Word ${targetPairs.length + 1}` });
-    await db.insert(challengeItems).values(targetPairs.map((pair, i) => ({ challengeId: vc.id, text: pair.it, translation: pair.en, correctValue: `pair_${i}` })));
+    while (targetPairs.length < 5) targetPairs.push({ target: `Word ${targetPairs.length + 1}`, en: `Word ${targetPairs.length + 1}` });
+    await db.insert(challengeItems).values(targetPairs.map((pair, i) => ({ challengeId: vc.id, text: pair.target, translation: pair.en, correctValue: `pair_${i}` })));
   }
 
   const [bc] = await db.insert(challenges).values({

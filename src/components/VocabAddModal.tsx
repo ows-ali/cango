@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getLang } from "@/lib/lang-config";
 
 interface Props {
   allScenarios: { id: number; name: string }[];
@@ -65,7 +66,7 @@ export function VocabAddModal({ allScenarios, onClose, onAdded }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs uppercase tracking-wider text-on-surface-variant font-semibold mb-1.5">
-                Italian *
+                {getLang().label} *
               </label>
               <input
                 value={targetWord}

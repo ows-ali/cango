@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
+import { getLang } from "@/lib/lang-config";
 
 export default function AuthPage() {
   const { data: session, status } = useSession();
@@ -62,7 +63,7 @@ export default function AuthPage() {
                 {mode === "signup" ? "Create your account" : "Welcome back"}
               </h2>
               <p className="text-on-surface-variant" style={{ fontFamily: "Inter, sans-serif", fontSize: "16px", lineHeight: "24px" }}>
-                {mode === "signup" ? "Unlock your linguistic potential today." : "Continue your Italian journey."}
+                {mode === "signup" ? "Unlock your linguistic potential today." : `Continue your ${getLang().label} journey.`}
               </p>
             </div>
 
