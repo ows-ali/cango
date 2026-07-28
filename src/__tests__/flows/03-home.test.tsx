@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderWithProviders, screen, waitFor } from "@/__tests__/utils";
+import { getLang } from "@/lib/lang-config";
 import HomePage from "@/app/(main)/home/page";
 
 describe("03 — Home Page", () => {
   it("shows skeleton cards while content loads", () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByText("My Italy")).toBeInTheDocument();
+    expect(screen.getByText(getLang().mySection)).toBeInTheDocument();
     expect(screen.getByText(/Ready to master/)).toBeInTheDocument();
   });
 
@@ -32,13 +33,13 @@ describe("03 — Home Page", () => {
 
   it("shows correct heading and greeting", () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByText("Buongiorno!")).toBeInTheDocument();
+    expect(screen.getByText(getLang().greeting)).toBeInTheDocument();
     expect(screen.getByText(/Ready to master/)).toBeInTheDocument();
   });
 
   it("shows My Italy section", () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByText("My Italy")).toBeInTheDocument();
+    expect(screen.getByText(getLang().mySection)).toBeInTheDocument();
   });
 
   it("each scenario card links to correct detail page", async () => {
