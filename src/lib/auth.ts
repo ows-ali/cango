@@ -3,9 +3,14 @@ import Credentials from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
 
+function env(name: string): string {
+  const lang = (process.env.APP_LANG || "it").toUpperCase();
+  return process.env[`${name}_${lang}`] || process.env[name]!;
+}
+
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  env("NEXT_PUBLIC_SUPABASE_URL"),
+  env("SUPABASE_SERVICE_ROLE_KEY")
 );
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
