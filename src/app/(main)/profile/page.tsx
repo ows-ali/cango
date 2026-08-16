@@ -8,6 +8,8 @@ import { useProfileStore } from "@/lib/stores/profile-store";
 
 const LEVELS = ["A1", "A2", "B1", "B2"] as const;
 
+const COFFEE_URL = process.env.NEXT_PUBLIC_COFFEE_URL;
+
 export default function ProfilePage() {
   const { data: session } = useSession();
   const { cefrLevel, fetch: fetchProfile, updateCefr } = useProfileStore();
@@ -87,6 +89,27 @@ export default function ProfilePage() {
             </p>
           )}
         </div>
+
+        {COFFEE_URL && (
+          <div className="bg-white rounded-2xl border border-outline-variant/30 p-8 shadow-sm">
+            <div className="text-center mb-4">
+              <span className="material-symbols-outlined text-4xl text-primary">local_cafe</span>
+              <h3 className="font-headline text-lg text-on-surface font-bold mt-2">Enjoying CanGo?</h3>
+              <p className="text-sm text-on-surface-variant mt-1">
+                CanGo is free during beta. If the app helps you, consider buying me a coffee.
+              </p>
+            </div>
+            <a
+              href={COFFEE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-semibold px-5 py-3 rounded-xl hover:bg-primary-container hover:text-on-primary-container transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">local_cafe</span>
+              Buy me a coffee
+            </a>
+          </div>
+        )}
 
         {/* Logout card */}
         <div className="bg-white rounded-2xl border border-outline-variant/30 p-8 shadow-sm">

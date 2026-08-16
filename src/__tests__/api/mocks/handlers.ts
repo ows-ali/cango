@@ -117,6 +117,18 @@ export const handlers = [
     }
     return HttpResponse.json(result);
   }),
+
+  http.get("*/api/beta/verify", ({ request }) => {
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code") || "";
+    return HttpResponse.json({ valid: code === "test-code" });
+  }),
+
+  http.post("*/api/beta/request", async ({ request }) => {
+    const { email } = (await request.json()) as { email?: string };
+    if (!email) return HttpResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+    return HttpResponse.json({ ok: true, message: "Thanks! We'll email you your access code soon." });
+  }),
 ];
 
 export function resetStores() {

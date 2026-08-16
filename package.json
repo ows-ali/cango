@@ -16,6 +16,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "seed": "dotenv -- tsx scripts/seed.ts",
+    "gen:code": "dotenv -- tsx scripts/gen-codes.ts",
+    "gen:code:it": "cross-env APP_LANG=it dotenv -- tsx scripts/gen-codes.ts",
     "dev:de": "cross-env APP_LANG=de NEXT_PUBLIC_APP_LANG=de next dev",
     "seed:de": "cross-env APP_LANG=de dotenv -- tsx scripts/seed.ts"
   },

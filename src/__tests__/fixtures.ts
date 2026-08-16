@@ -14,6 +14,21 @@ export const MOCK_USER_STATS = {
   currentStreak: 3,
   longestStreak: 5,
   todayXp: 20,
+  completedCount: 2,
+  weeklyActivity: [
+    { date: "2026-08-10", xpEarned: 50 },
+    { date: "2026-08-11", xpEarned: 20 },
+    { date: "2026-08-12", xpEarned: 70 },
+    { date: "2026-08-13", xpEarned: 0 },
+    { date: "2026-08-14", xpEarned: 10 },
+    { date: "2026-08-15", xpEarned: 0 },
+    { date: "2026-08-16", xpEarned: 20 },
+  ],
+  scenarioProgress: [
+    { id: 1, name: "Transportation", slug: "transportation", total: 4, completed: 2, progress: 50 },
+    { id: 2, name: "Doctor Visit", slug: "doctor", total: 2, completed: 0, progress: 0 },
+    { id: 3, name: "Job Interview", slug: "job-interview", total: 1, completed: 0, progress: 0 },
+  ],
 };
 
 export const MOCK_SCENARIOS: ScenarioFixture[] = [

@@ -55,6 +55,9 @@ describe("01 — Auth Flow", () => {
     fireEvent.change(screen.getByPlaceholderText("Create a password"), {
       target: { value: "password123" },
     });
+    fireEvent.change(screen.getByPlaceholderText("Enter your access code"), {
+      target: { value: "test-code" },
+    });
     screen.getByText("Create Account").click();
 
     await waitFor(() => {
@@ -62,6 +65,7 @@ describe("01 — Auth Flow", () => {
         email: "new@user.com",
         password: "password123",
         mode: "signup",
+        code: "test-code",
         redirect: false,
       });
     });
@@ -110,10 +114,53 @@ describe("01 — Auth Flow", () => {
     fireEvent.change(screen.getByPlaceholderText("Create a password"), {
       target: { value: "password123" },
     });
+    fireEvent.change(screen.getByPlaceholderText("Enter your access code"), {
+      target: { value: "test-code" },
+    });
     screen.getByText("Create Account").click();
 
     await waitFor(() => {
       expect(screen.getByText("Email already in use")).toBeInTheDocument();
+    });
+  });
+
+  it("blocks signup with an invalid access code", async () => {
+    renderWithProviders(<AuthPage />);
+
+    const { fireEvent } = await import("@testing-library/react");
+    fireEvent.change(screen.getByPlaceholderText("name@example.com"), {
+      target: { value: "new@user.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Create a password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Enter your access code"), {
+      target: { value: "wrong-code" },
+    });
+    screen.getByText("Create Account").click();
+
+    await waitFor(() => {
+      expect(screen.getByText("Invalid access code")).toBeInTheDocument();
+    });
+    expect(vi.mocked(signIn)).not.toHaveBeenCalled();
+  });
+
+  it("captures email via the no-code request flow", async () => {
+    renderWithProviders(<AuthPage />);
+
+    screen.getByText("Don't have a code yet?").click();
+    await waitFor(() => {
+      expect(screen.getByText("Drop your email and we'll get you an access code.")).toBeInTheDocument();
+    });
+
+    const { fireEvent } = await import("@testing-library/react");
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "lead@test.com" },
+    });
+    screen.getByText("Request access code").click();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Thanks! We'll email you your access code soon/)).toBeInTheDocument();
     });
   });
 

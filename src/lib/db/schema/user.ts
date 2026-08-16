@@ -59,3 +59,16 @@ export const userVocabulary = pgTable("user_vocabulary", {
 }, (table) => ({
   uniqueUserWord: uniqueIndex("unique_user_word").on(table.userId, table.wordId),
 }));
+
+export const betaCodes = pgTable("beta_codes", {
+  code: varchar("code", { length: 100 }).primaryKey(),
+  useCount: integer("use_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const betaRequests = pgTable("beta_requests", {
+  id: text("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  codeSentAt: timestamp("code_sent_at"),
+});
