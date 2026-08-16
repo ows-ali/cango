@@ -1426,8 +1426,8 @@ accept voluntary tips — no paid plans yet (payment provider undecided).
   a `beta_requests` row (email unique, `requested_at`, `code_sent_at`, `ip`).
 - With `RESEND_API_KEY` configured, each request **instantly receives a fresh
   unique code by email** (e.g. `cango-x7k2m9`) and `code_sent_at` is stamped.
-- Without a key, emails are collected silently and the owner sends codes
-  manually.
+- Without a key, the generated code is returned in the API response and shown
+  on-screen in plain text, so the flow works with zero email setup.
 
 ## 29.3 Spam Protection (highlighted)
 

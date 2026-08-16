@@ -75,7 +75,7 @@ env vars have `_DE`-suffixed variants (`DATABASE_URL_DE`, `AUTH_SECRET_DE`,
 - `BETA_CODE_REQUIRED` / `NEXT_PUBLIC_BETA_CODE_REQUIRED` — set to `false`
   to disable the access-code gate entirely (default `true`)
 - `RESEND_API_KEY` — enables instant email delivery of access codes
-  (no key = silent email collection, no sending)
+  (no key = the code is shown on-screen instead of emailed)
 - `EMAIL_FROM` — sender address, e.g. `CanGo <beta@yourdomain.com>`
 - `BETA_MAX_PER_IP` — max new code requests per IP per day (default `3`)
 - `BETA_DAILY_LIMIT` — max new code requests per day (default `90`, safely
@@ -166,10 +166,10 @@ CanGo is gated by free access codes during beta. The flow:
    npm run gen:code:it                       # explicitly targets the Italian DB
    ```
 2. No code? The "Don't have a code yet?" box captures an email lead
-   (`beta_requests` table) and, when `RESEND_API_KEY` is configured,
-   **instantly emails a fresh unique code** (e.g. `cango-x7k2m9`) and stamps
-   `code_sent_at`. Without a key, emails are silently collected and you send
-   codes manually.
+   (`beta_requests` table). With `RESEND_API_KEY` configured, each request
+   **instantly receives a fresh unique code by email** (e.g. `cango-x7k2m9`)
+   and `code_sent_at` is stamped. Without a key, the **code is shown directly
+   on-screen** (plain text) so the flow still works with zero email setup.
 
 **Spam protection** (highlighted, built-in):
 

@@ -11,11 +11,15 @@ const mocks = vi.hoisted(() => {
   return {
     supabase: { from },
     sendBetaCodeEmail: vi.fn(),
+    hasEmailConfig: vi.fn(),
   };
 });
 
 vi.mock("@/lib/db-supabase", () => ({ supabase: mocks.supabase }));
-vi.mock("@/lib/email", () => ({ sendBetaCodeEmail: mocks.sendBetaCodeEmail }));
+vi.mock("@/lib/email", () => ({
+  sendBetaCodeEmail: mocks.sendBetaCodeEmail,
+  hasEmailConfig: mocks.hasEmailConfig,
+}));
 
 import { POST } from "@/app/api/beta/request/route";
 
@@ -67,14 +71,19 @@ function makeBuilder(table: string) {
   return builder;
 }
 
-function post(email: string, ip?: string) {
+function post(
+  email: string,
+  ip?: string,
+  extraHeaders?: Record<string, string>,
+  body?: Record<string, unknown>
+) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (ip) headers["x-forwarded-for"] = ip;
   return POST(
     new Request("http://localhost/api/beta/request", {
       method: "POST",
-      headers,
-      body: JSON.stringify({ email }),
+      headers: { ...headers, ...extraHeaders },
+      body: JSON.stringify({ email, ...body }),
     })
   );
 }
@@ -99,6 +108,8 @@ describe("10 — Beta Request Route", () => {
     router = defaultRouter;
     mocks.sendBetaCodeEmail.mockReset();
     mocks.sendBetaCodeEmail.mockResolvedValue(true);
+    mocks.hasEmailConfig.mockReset();
+    mocks.hasEmailConfig.mockReturnValue(true);
     mocks.supabase.from.mockReset();
     mocks.supabase.from.mockImplementation((table: string) => makeBuilder(table));
   });
@@ -110,7 +121,12 @@ describe("10 — Beta Request Route", () => {
   });
 
   it("sends a code and stamps code_sent_at for a new email", async () => {
-    const res = await post("new@test.com", "1.2.3.4");
+    const res = await post(
+      "new@test.com",
+      "1.2.3.4",
+      { "x-forwarded-host": "old.cango.app", "x-forwarded-proto": "https" },
+      { origin: "https://de.cango.app" }
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.message).toContain("Check your inbox");
@@ -119,12 +135,56 @@ describe("10 — Beta Request Route", () => {
     const sendArgs = mocks.sendBetaCodeEmail.mock.calls[0][0];
     expect(sendArgs.to).toBe("new@test.com");
     expect(sendArgs.code).toMatch(/^cango-[a-z0-9]{8}$/);
+    expect(sendArgs.authUrl).toBe("https://de.cango.app/auth");
 
     const builders = mocks.supabase.from.mock.results.map((r) => r.value);
     const updated = builders.some(
       (b) => hasMethod(b._calls, "update") && b._calls[0].table === "beta_requests"
     );
     expect(updated).toBe(true);
+  });
+
+  it("prefers the client-provided origin over forwarded headers", async () => {
+    const res = await post(
+      "origin@test.com",
+      "1.2.3.4",
+      { "x-forwarded-host": "old.cango.app", "x-forwarded-proto": "https" },
+      { origin: "http://localhost:3000" }
+    );
+    expect(res.status).toBe(200);
+    const sendArgs = mocks.sendBetaCodeEmail.mock.calls[0][0];
+    expect(sendArgs.authUrl).toBe("http://localhost:3000/auth");
+  });
+
+  it("strips paths/query from a valid origin", async () => {
+    const res = await post(
+      "clean@test.com",
+      "1.2.3.4",
+      undefined,
+      { origin: "https://de.cango.app/evil?x=1" }
+    );
+    expect(res.status).toBe(200);
+    const sendArgs = mocks.sendBetaCodeEmail.mock.calls[0][0];
+    expect(sendArgs.authUrl).toBe("https://de.cango.app/auth");
+  });
+
+  it("falls back to server headers when the origin is missing or unsafe", async () => {
+    const res = await post(
+      "fallback@test.com",
+      "1.2.3.4",
+      { "x-forwarded-host": "old.cango.app", "x-forwarded-proto": "https" },
+      { origin: "javascript:alert(1)" }
+    );
+    expect(res.status).toBe(200);
+    const sendArgs = mocks.sendBetaCodeEmail.mock.calls[0][0];
+    expect(sendArgs.authUrl).toBe("https://old.cango.app/auth");
+  });
+
+  it("falls back to the default origin when nothing is available", async () => {
+    const res = await post("plain@test.com");
+    expect(res.status).toBe(200);
+    const sendArgs = mocks.sendBetaCodeEmail.mock.calls[0][0];
+    expect(sendArgs.authUrl).toBe("https://cango.app/auth");
   });
 
   it("does not send again for a duplicate email", async () => {
@@ -170,13 +230,31 @@ describe("10 — Beta Request Route", () => {
     expect(mocks.sendBetaCodeEmail).not.toHaveBeenCalled();
   });
 
-  it("keeps the lead without stamping code_sent_at when the email fails", async () => {
+  it("shows the code on-screen and keeps the lead without stamping when the email fails", async () => {
     mocks.sendBetaCodeEmail.mockResolvedValue(false);
 
     const res = await post("failing@test.com", "1.2.3.4");
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.message).toContain("We'll email you your access code soon");
+    expect(body.code).toMatch(/^cango-[a-z0-9]{8}$/);
+    expect(body.message).toContain("Email sending failed");
+
+    const builders = mocks.supabase.from.mock.results.map((r) => r.value);
+    const updated = builders.some(
+      (b) => hasMethod(b._calls, "update") && b._calls[0].table === "beta_requests"
+    );
+    expect(updated).toBe(false);
+  });
+
+  it("shows the code on-screen when email is not configured", async () => {
+    mocks.hasEmailConfig.mockReturnValue(false);
+    mocks.sendBetaCodeEmail.mockResolvedValue(false);
+
+    const res = await post("nocfg@test.com", "1.2.3.4");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.code).toMatch(/^cango-[a-z0-9]{8}$/);
+    expect(body.message).toContain("Email isn't configured");
 
     const builders = mocks.supabase.from.mock.results.map((r) => r.value);
     const updated = builders.some(

@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [showCodeRequest, setShowCodeRequest] = useState(false);
   const [requestEmail, setRequestEmail] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
+  const [requestCode, setRequestCode] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,14 +56,16 @@ export default function AuthPage() {
     if (!requestEmail.trim()) return;
     setRequestLoading(true);
     setRequestMessage("");
+    setRequestCode("");
     try {
       const res = await fetch("/api/beta/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: requestEmail }),
+        body: JSON.stringify({ email: requestEmail, origin: window.location.origin }),
       });
       const data = await res.json();
       setRequestMessage(data.message || data.error || "Something went wrong — please try again.");
+      if (typeof data.code === "string") setRequestCode(data.code);
     } catch {
       setRequestMessage("Something went wrong — please try again.");
     }
@@ -210,6 +213,11 @@ export default function AuthPage() {
                       </button>
                       {requestMessage && (
                         <p className="text-xs text-center text-green-600">{requestMessage}</p>
+                      )}
+                      {requestCode && (
+                        <p className="mt-2 text-center font-mono text-lg font-bold tracking-widest text-foreground">
+                          {requestCode}
+                        </p>
                       )}
                     </div>
                   )}

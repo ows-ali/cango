@@ -11,7 +11,7 @@
 ## Commands
 - `npm run dev` — dev server at localhost:3000 (targets `APP_LANG` DB; `npm run dev:de` forces German)
 - `npm run build` — generates icons → `vitest run` → `next build` (ALL three steps)
-- `npm test` — vitest (no DB, uses MSW mocks; 60 tests across 11 files)
+- `npm test` — vitest (no DB, uses MSW mocks; 65 tests across 11 files)
 - `npm run test:e2e` — Playwright (requires test user, see e2e/auth.setup.ts)
 - `npm run seed` — `dotenv -- tsx scripts/seed.ts` (idempotent, uses Drizzle ORM; `npm run seed:de` for German DB)
 - `npm run gen:code -- <code>...` — inserts beta access codes into the `APP_LANG` DB; `npm run gen:code:it` forces the Italian DB
@@ -47,7 +47,7 @@
 - Routes: `GET /api/beta/verify?code=` (public, `{ valid }`) and `POST /api/beta/request` (public)
 - Signup flow: `/auth` verifies the code client-side via `/api/beta/verify`, then `auth.ts` re-validates server-side against `beta_codes` (case-insensitive) and increments `use_count`
 - Gate toggle: `BETA_CODE_REQUIRED` (server) + `NEXT_PUBLIC_BETA_CODE_REQUIRED` (client), both default `true`
-- `POST /api/beta/request` collects a lead and, with `RESEND_API_KEY` set, generates a fresh `cango-xxxxxxxx` code, emails it via Resend (`src/lib/email.ts`), and stamps `code_sent_at`; no key → silent collection (manual sending)
+- `POST /api/beta/request` collects a lead and, with `RESEND_API_KEY` set, generates a fresh `cango-xxxxxxxx` code, emails it via Resend (`src/lib/email.ts`), and stamps `code_sent_at`; without a key, the code is returned in the response and shown on-screen instead (no email setup needed)
 - **Spam protection built-in** (`src/app/api/beta/request/route.ts`): per-IP daily cap `BETA_MAX_PER_IP` (default 3, only enforced when an `x-forwarded-for` IP is present), global daily cap `BETA_DAILY_LIMIT` (default 90), and unique-email dedupe — over cap → HTTP 429
 - `use_count` increments before the duplicate-email check, so failed signups still tick it up (harmless for unlimited codes)
 - `gen-codes.ts` targets whatever DB `APP_LANG` points to (`.env` currently `APP_LANG=de` → German DB); the script logs the target lang

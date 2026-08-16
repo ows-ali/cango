@@ -181,7 +181,8 @@ describe("01 — Auth Flow", () => {
     screen.getByText("Request access code").click();
 
     await waitFor(() => {
-      expect(screen.getByText(/Thanks! We'll email you your access code soon/)).toBeInTheDocument();
+      expect(screen.getByText(/Email isn't configured yet/)).toBeInTheDocument();
+      expect(screen.getByText("cango-testcode")).toBeInTheDocument();
     });
   });
 

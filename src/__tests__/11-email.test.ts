@@ -32,7 +32,11 @@ describe("11 — Email Helper", () => {
     mockSend.mockResolvedValue({ data: { id: "1" }, error: null, headers: {} });
     const { sendBetaCodeEmail } = await loadEmail();
 
-    const ok = await sendBetaCodeEmail({ to: "a@b.com", code: "cango-x7k2m9" });
+    const ok = await sendBetaCodeEmail({
+      to: "a@b.com",
+      code: "cango-x7k2m9",
+      authUrl: "https://de.cango.app/auth",
+    });
     expect(ok).toBe(true);
     expect(mockSend).toHaveBeenCalledTimes(1);
 
@@ -40,6 +44,7 @@ describe("11 — Email Helper", () => {
     expect(args.to).toBe("a@b.com");
     expect(args.subject).toContain("CanGo");
     expect(args.html).toContain("cango-x7k2m9");
+    expect(args.html).toContain('href="https://de.cango.app/auth"');
   });
 
   it("returns false when Resend reports an error", async () => {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/db-supabase";
-import { sendBetaCodeEmail } from "@/lib/email";
+import { hasEmailConfig, sendBetaCodeEmail } from "@/lib/email";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,14 +20,26 @@ function requestBaseUrl(req: Request): string {
   return host ? `${proto}://${host}` : "https://cango.app";
 }
 
+function safeOrigin(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
 function generateCode(): string {
   const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
   return `cango-${suffix}`;
 }
 
 export async function POST(req: Request) {
-  const { email } = await req.json();
+  const { email, origin } = await req.json();
   const clean = (email || "").toString().trim().toLowerCase();
+  const authOrigin = safeOrigin(origin) || requestBaseUrl(req);
 
   if (!EMAIL_RE.test(clean)) {
     return NextResponse.json(
@@ -94,7 +106,7 @@ export async function POST(req: Request) {
   const sent = await sendBetaCodeEmail({
     to: clean,
     code,
-    authUrl: `${requestBaseUrl(req)}/auth`,
+    authUrl: `${authOrigin}/auth`,
   });
 
   if (sent) {
@@ -110,6 +122,9 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    message: "Thanks! We'll email you your access code soon.",
+    code,
+    message: hasEmailConfig()
+      ? "Email sending failed — here's your access code:"
+      : "Email isn't configured yet — here's your access code:",
   });
 }

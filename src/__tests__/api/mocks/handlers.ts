@@ -131,7 +131,11 @@ export const handlers = [
   http.post("*/api/beta/request", async ({ request }) => {
     const { email } = (await request.json()) as { email?: string };
     if (!email) return HttpResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
-    return HttpResponse.json({ ok: true, message: "Thanks! We'll email you your access code soon." });
+    return HttpResponse.json({
+      ok: true,
+      message: "Email isn't configured yet — here's your access code:",
+      code: "cango-testcode",
+    });
   }),
 ];
 
