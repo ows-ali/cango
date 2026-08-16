@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, innerJoin } from "drizzle-orm";
 import { db } from "../src/lib/db";
 import {
   languages, scenarios, levels, scenarioLevels, modules, experiences,
@@ -7,6 +7,52 @@ import {
 } from "../src/lib/db/schema";
 
 const SKIP_EXISTING = true;
+
+async function buildMatchPairs(
+  scenario: string,
+  matchingPairs: { target: string; en: string }[],
+  extraVocabPairs: { target: string; en: string }[] | undefined,
+  vocab: { target: string; en: string }[],
+): Promise<{ target: string; en: string }[]> {
+  const seen = new Set<string>();
+  const pairs: { target: string; en: string }[] = [];
+  const pushPair = (p: { target: string; en: string }) => {
+    const key = p.target.trim().toLowerCase();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    pairs.push(p);
+  };
+  for (const p of [...matchingPairs, ...(extraVocabPairs || []), ...vocab.map(v => ({ target: v.target, en: v.en }))]) {
+    pushPair(p);
+    if (pairs.length >= 5) break;
+  }
+  if (pairs.length < 5) {
+    const sc = await db.select({ id: scenarios.id }).from(scenarios)
+      .where(eq(scenarios.name, scenario)).limit(1);
+    if (sc.length > 0) {
+      const exps = await db.select({ id: experiences.id }).from(experiences)
+        .innerJoin(modules, eq(experiences.moduleId, modules.id))
+        .innerJoin(scenarioLevels, eq(modules.scenarioLevelId, scenarioLevels.id))
+        .where(eq(scenarioLevels.scenarioId, sc[0].id));
+      const expIds = exps.map(e => e.id);
+      if (expIds.length > 0) {
+        const links = await db.select({ wordId: experienceWords.wordId }).from(experienceWords)
+          .where(inArray(experienceWords.experienceId, expIds));
+        const wordIds = links.map(l => l.wordId);
+        if (wordIds.length > 0) {
+          const ws = await db.select({
+            targetWord: words.targetWord, translationText: words.translationText,
+          }).from(words).where(inArray(words.id, wordIds));
+          for (const w of ws) {
+            pushPair({ target: w.targetWord, en: w.translationText });
+            if (pairs.length >= 5) break;
+          }
+        }
+      }
+    }
+  }
+  return pairs.slice(0, 5);
+}
 
 export async function addWord(target: string, english: string, article?: string, plural?: string, exp?: number) {
   const existing = await db.select({ id: words.id }).from(words)
@@ -93,12 +139,13 @@ export async function addExperience(
   }
 
   if (matchingPairs.length > 0) {
+    const pairs = await buildMatchPairs(scenario, matchingPairs, extraVocabPairs, vocab);
     const [m] = await db.insert(questions).values({
       experienceId: eid, type: "MATCHING", questionText: "Match the words",
       translationText: "Match the words", order: mcqs.length + 1,
     }).returning({ id: questions.id });
     await db.insert(questionOptions).values(
-      matchingPairs.map(p => ({ questionId: m.id, targetText: p.target, translationText: p.en, correct: false }))
+      pairs.map(p => ({ questionId: m.id, targetText: p.target, translationText: p.en, correct: false }))
     );
   }
 
@@ -109,9 +156,7 @@ export async function addExperience(
   if (manualVocabMatchItems) {
     await db.insert(challengeItems).values(manualVocabMatchItems.map(ci => ({ challengeId: vc.id, text: ci.text, translation: ci.translation, correctValue: ci.correctValue })));
   } else {
-    const allPairs = [...matchingPairs, ...(extraVocabPairs || [])];
-    const targetPairs = allPairs.slice(0, 5);
-    while (targetPairs.length < 5) targetPairs.push({ target: `Word ${targetPairs.length + 1}`, en: `Word ${targetPairs.length + 1}` });
+    const targetPairs = await buildMatchPairs(scenario, matchingPairs, extraVocabPairs, vocab);
     await db.insert(challengeItems).values(targetPairs.map((pair, i) => ({ challengeId: vc.id, text: pair.target, translation: pair.en, correctValue: `pair_${i}` })));
   }
 

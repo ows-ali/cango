@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
+import { PendingLink } from "@/components/PendingLink";
 import { useContentStore } from "@/lib/stores/content-store";
 import { useProfileStore } from "@/lib/stores/profile-store";
 import { getScenarioMedia } from "@/lib/scenario-media";
@@ -62,7 +62,7 @@ export default function HomePage() {
             {scenarios.filter((s) =>
               s.levels?.some((sl) => sl.level.name === userLevel)
             ).map((s, i) => (
-              <Link key={s.id} href={`/scenario/${s.slug}`} className="opacity-0 animate-fadeIn" style={{ animationDelay: `${i * 100}ms` }}>
+              <PendingLink key={s.id} href={`/scenario/${s.slug}`} className="opacity-0 animate-fadeIn" style={{ animationDelay: `${i * 100}ms` }}>
                 <div className="bg-white flex flex-col rounded-2xl overflow-hidden shadow-sm border border-outline-variant/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 h-full">
                   <div className="aspect-[16/9] relative overflow-hidden">
                     <img src={getScenarioMedia(s.slug).image} alt={s.name} className="w-full h-full object-cover" />
@@ -98,7 +98,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </PendingLink>
             ))}
 
             {/* Coming Soon */}

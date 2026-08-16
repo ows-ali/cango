@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import { PwaRegister } from "@/components/PwaRegister";
 import { getLang } from "@/lib/lang-config";
@@ -47,6 +49,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         <Providers>{children}</Providers>
         <PwaRegister />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

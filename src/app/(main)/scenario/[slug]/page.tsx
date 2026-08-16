@@ -8,6 +8,7 @@ import { useStats } from "@/lib/stats-context";
 import { useContentStore } from "@/lib/stores/content-store";
 import { useProfileStore } from "@/lib/stores/profile-store";
 import { HeroMedia } from "@/components/HeroMedia";
+import { PendingLink } from "@/components/PendingLink";
 
 interface ScenarioData {
   id: number;
@@ -229,7 +230,7 @@ export default function ScenarioDetailPage() {
                   const isCompleted = prog?.completed;
                   const hasBonus = prog?.bonusXpClaimed;
                   return (
-                    <Link
+                    <PendingLink
                       key={exp.id}
                       href={`/experience/${exp.id}`}
                       className="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors"
@@ -252,7 +253,7 @@ export default function ScenarioDetailPage() {
                           <span className="bg-primary text-white text-xs px-3 py-1 rounded-full font-semibold">START</span>
                         )}
                       </div>
-                    </Link>
+                    </PendingLink>
                   );
                 })}
               </div>

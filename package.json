@@ -31,6 +31,8 @@
     "@sentry/nextjs": "^10.66.0",
     "@supabase/supabase-js": "^2.109.0",
     "@types/bcryptjs": "^2.4.6",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "ai": "^6.0.234",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
