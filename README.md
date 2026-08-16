@@ -197,10 +197,14 @@ details.
 
 | View | Mobile | Desktop |
 |------|--------|---------|
-| **Landing Page** | ![Landing](screenshot/mobile_landing.png) | ![Landing](screenshot/desktop_landing.png) |
-| **Onboarding Welcome** | ![Onboarding Welcome](screenshot/mobile_onboarding_welcome.png) | ![Onboarding Welcome](screenshot/desktop_onboarding_welcome.png) |
-| **Level Selection** | ![Onboarding Level](screenshot/mobile_onboarding_level.png) | ![Onboarding Level](screenshot/desktop_onboarding_level.png) |
-| **Goals Selection** | ![Onboarding Goals](screenshot/mobile_onboarding_goals.png) | ![Onboarding Goals](screenshot/desktop_onboarding_goals.png) |
-| **Main Dashboard** | ![Home](screenshot/mobile_home.png) | ![Home](screenshot/desktop_home.png) |
-| **Scenario Overview** | ![Scenario](screenshot/mobile_scenario.png) | ![Scenario](screenshot/desktop_scenario.png) |
-| **Experience Player** | ![Experience](screenshot/mobile_experience.png) | ![Experience](screenshot/desktop_experience.png) |
+| **Landing Page** | ![Landing](public/screenshots/mobile_landing.png) | ![Landing](public/screenshots/desktop_landing.png) |
+| **Onboarding Welcome** | ![Onboarding Welcome](public/screenshots/mobile_onboarding_welcome.png) | ![Onboarding Welcome](public/screenshots/desktop_onboarding_welcome.png) |
+| **Level Selection** | ![Onboarding Level](public/screenshots/mobile_onboarding_level.png) | ![Onboarding Level](public/screenshots/desktop_onboarding_level.png) |
+| **Goals Selection** | ![Onboarding Goals](public/screenshots/mobile_onboarding_goals.png) | ![Onboarding Goals](public/screenshots/desktop_onboarding_goals.png) |
+| **Main Dashboard** | ![Home](public/screenshots/mobile_home.png) | ![Home](public/screenshots/desktop_home.png) |
+| **Scenario Overview** | ![Scenario](public/screenshots/mobile_scenario.png) | ![Scenario](public/screenshots/desktop_scenario.png) |
+| **Experience Player (AI Tutor)** | ![Experience](public/screenshots/mobile_experience.png) | ![Experience](public/screenshots/desktop_experience.png) |
+| **Stats & Progress** | ![Progress](public/screenshots/mobile_progress.png) | ![Progress](public/screenshots/desktop_progress.png) |
+| **Profile & Tip Jar** | ![Profile](public/screenshots/mobile_profile.png) | ![Profile](public/screenshots/desktop_profile.png) |
+| **AI Tutor** | ![AI Tutor](public/screenshots/mobile_tutor.png) | ![AI Tutor](public/screenshots/desktop_tutor.png) |
+| **Vocabulary Kanban** | ![Vocabulary](public/screenshots/mobile_vocabulary.png) | ![Vocabulary](public/screenshots/desktop_vocabulary.png) |

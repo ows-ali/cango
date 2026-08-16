@@ -3,41 +3,44 @@ import fs from "fs";
 import path from "path";
 
 async function captureViewports(page, name) {
-  const screenshotDir = path.resolve("screenshot");
-  if (!fs.existsSync(screenshotDir)) {
-    fs.mkdirSync(screenshotDir);
+  const screenshotsDir = path.resolve("public", "screenshots");
+  if (!fs.existsSync(screenshotsDir)) {
+    fs.mkdirSync(screenshotsDir, { recursive: true });
   }
 
   // 1. Desktop Screenshot
   console.log(`Setting desktop viewport for ${name}...`);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.waitForTimeout(2000); // Give layout shift time to settle
-  const desktopPath = path.join(screenshotDir, `desktop_${name}.png`);
+  await page.waitForTimeout(1500); // Give layout shift time to settle
+  const desktopPath = path.join(screenshotsDir, `desktop_${name}.png`);
   await page.screenshot({ path: desktopPath, fullPage: true });
   console.log(`Saved desktop screenshot: ${desktopPath}`);
 
   // 2. Mobile Screenshot
   console.log(`Setting mobile viewport for ${name}...`);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForTimeout(2000); // Give layout shift time to settle
-  const mobilePath = path.join(screenshotDir, `mobile_${name}.png`);
+  await page.waitForTimeout(1500); // Give layout shift time to settle
+  // Move fixed bottom navigation to static so it renders at the bottom/end in fullPage capture
+  await page.evaluate(() => {
+    const fixedBars = document.querySelectorAll('nav.fixed, footer.fixed, [class*="fixed bottom-0"]');
+    fixedBars.forEach((el) => {
+      el.style.position = "static";
+      el.style.width = "100%";
+    });
+  });
+  const mobilePath = path.join(screenshotsDir, `mobile_${name}.png`);
   await page.screenshot({ path: mobilePath, fullPage: true });
   console.log(`Saved mobile screenshot: ${mobilePath}`);
 }
 
 async function main() {
-  console.log("Launching browser in non-headless mode...");
-  const browser = await chromium.launch({ headless: false });
+  console.log("Launching browser in headless mode...");
+  const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   await page.setViewportSize({ width: 1280, height: 800 });
 
   page.on("console", (msg) => console.log(`[PAGE CONSOLE] ${msg.type()}: ${msg.text()}`));
   page.on("requestfailed", (request) => console.log(`[REQUEST FAILED] ${request.url()} - ${request.failure()?.errorText}`));
-  page.on("response", async (response) => {
-    if (response.status() >= 400) {
-      console.log(`[API ERROR] ${response.url()} returned status ${response.status()}`);
-    }
-  });
 
   try {
     console.log("Navigating to http://localhost:3000/ (landing)...");
@@ -72,38 +75,63 @@ async function main() {
     
     await page.waitForTimeout(2000);
     
-    // If redirected to auth or onboarding, navigate directly to /home
-    if (page.url().includes("/auth") || page.url().includes("/onboarding")) {
-      console.log("Navigating directly to /home...");
-      await page.goto("http://localhost:3000/home", { waitUntil: "load" });
-    }
+    // Navigate directly to /home
+    console.log("Navigating to /home...");
+    await page.goto("http://localhost:3000/home", { waitUntil: "networkidle" });
     
-    // Wait a couple of seconds to ensure page content loads fully
+    // Wait for scenarios to load
     console.log("Waiting for /home scenarios to load...");
-    await page.waitForSelector("a[href*='/scenario/']", { timeout: 15000 });
-    console.log("Content loaded!");
-    
-    // Capture Home
+    await page.waitForSelector("a[href*='/scenario/']", { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(1000);
     await captureViewports(page, "home");
     
     // Navigate to scenario details
     console.log("Navigating to http://localhost:3000/scenario/transportation...");
-    await page.goto("http://localhost:3000/scenario/transportation", { waitUntil: "load" });
-    await page.waitForSelector("button:has-text('Delay Announcements'), div:has-text('Experiences')", { timeout: 15000 });
-    console.log("Scenario details loaded!");
-    
-    // Capture Scenario
+    await page.goto("http://localhost:3000/scenario/transportation", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
     await captureViewports(page, "scenario");
 
-    // Navigate to experience details
-    console.log("Navigating to http://localhost:3000/experience/1...");
-    await page.goto("http://localhost:3000/experience/1", { waitUntil: "load" });
-    await page.waitForSelector("h3:has-text('Transcript')", { timeout: 15000 });
-    await page.waitForTimeout(1000);
-    console.log("Experience details loaded!");
+    // Discover first experience from scenario page or fallback to /experience/1
+    const expHref = await page.locator("a[href*='/experience/']").first().getAttribute("href").catch(() => null);
+    const expUrl = expHref ? `http://localhost:3000${expHref}` : "http://localhost:3000/experience/1";
+    console.log(`Navigating to experience: ${expUrl}...`);
+    await page.goto(expUrl, { waitUntil: "networkidle" });
+    await page.waitForTimeout(2000);
+
+    // Expand the AI Tutor section
+    const aiTutorBtn = page.locator('button:has-text("Practice with AI Tutor")');
+    if (await aiTutorBtn.isVisible()) {
+      console.log("Expanding AI Tutor chat...");
+      await aiTutorBtn.click();
+      await page.waitForTimeout(1500);
+    }
     await captureViewports(page, "experience");
 
-    console.log("Screenshots captured successfully!");
+    // Navigate to stats / progress page
+    console.log("Navigating to http://localhost:3000/progress...");
+    await page.goto("http://localhost:3000/progress", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    await captureViewports(page, "progress");
+
+    // Navigate to profile page (with Coffee card)
+    console.log("Navigating to http://localhost:3000/profile...");
+    await page.goto("http://localhost:3000/profile", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    await captureViewports(page, "profile");
+
+    // Navigate to tutor page
+    console.log("Navigating to http://localhost:3000/tutor...");
+    await page.goto("http://localhost:3000/tutor", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    await captureViewports(page, "tutor");
+
+    // Navigate to vocabulary page
+    console.log("Navigating to http://localhost:3000/vocabulary...");
+    await page.goto("http://localhost:3000/vocabulary", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1500);
+    await captureViewports(page, "vocabulary");
+
+    console.log("All screenshots captured successfully!");
   } catch (err) {
     console.error("Error during automation:", err);
   } finally {
