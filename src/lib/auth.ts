@@ -3,9 +3,14 @@ import Credentials from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
 
+function env(name: string): string {
+  const lang = (process.env.APP_LANG || "it").toUpperCase();
+  return process.env[`${name}_${lang}`] || process.env[name]!;
+}
+
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  env("NEXT_PUBLIC_SUPABASE_URL"),
+  env("SUPABASE_SERVICE_ROLE_KEY")
 );
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -15,6 +20,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
         mode: { label: "Mode", type: "hidden" },
+        code: { label: "Access code", type: "text" },
       },
       async authorize(credentials) {
         const email = credentials?.email as string;
@@ -24,6 +30,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!email || !password) return null;
 
         if (mode === "signup") {
+          if ((process.env.BETA_CODE_REQUIRED ?? "true") === "true") {
+            const code = ((credentials?.code as string) || "").trim().toLowerCase();
+            if (!code) return null;
+            const { data: codeRow, error: codeError } = await supabase
+              .from("beta_codes")
+              .select("code, use_count")
+              .ilike("code", code)
+              .maybeSingle();
+            if (codeError) throw codeError;
+            if (!codeRow) return null;
+            await supabase
+              .from("beta_codes")
+              .update({ use_count: (codeRow.use_count || 0) + 1 })
+              .eq("code", codeRow.code);
+          }
+
           const { data: existing } = await supabase
             .from("users")
             .select("id")
@@ -71,4 +93,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   session: { strategy: "jwt" },
+  trustHost: true,
 });

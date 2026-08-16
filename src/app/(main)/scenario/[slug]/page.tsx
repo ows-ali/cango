@@ -5,7 +5,10 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useStats } from "@/lib/stats-context";
-import { useContent } from "@/lib/content-context";
+import { useContentStore } from "@/lib/stores/content-store";
+import { useProfileStore } from "@/lib/stores/profile-store";
+import { HeroMedia } from "@/components/HeroMedia";
+import { PendingLink } from "@/components/PendingLink";
 
 interface ScenarioData {
   id: number;
@@ -29,24 +32,25 @@ interface ScenarioData {
   }[];
 }
 
-const LEVEL_MAP: Record<string, number> = { A2: 1, B1: 2, B2: 3 };
-const HERO_IMAGES: Record<string, string> = {
-  transportation: "/images/scenario-transportation.jpg",
-  doctor: "/images/scenario-doctor.jpg",
-  "job-interview": "/images/scenario-job-interview.jpg",
-};
+const LEVEL_MAP: Record<string, number> = { A1: 4, A2: 1, B1: 2, B2: 3 };
 
 export default function ScenarioDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: session, status } = useSession();
   const { refreshStats } = useStats();
-  const { content: rawData, getScenarioBySlug, loaded } = useContent();
+  const { getScenarioBySlug, fetch: fetchContent } = useContentStore();
+  const { cefrLevel, scenarioLevels, fetch: fetchProfile } = useProfileStore();
   const found = getScenarioBySlug(slug) as ScenarioData | null;
   const [data, setData] = useState<ScenarioData | null>(null);
   const [activeLevel, setActiveLevel] = useState(2);
   const [expProgress, setExpProgress] = useState<Record<number, { completed: boolean; lessonXpClaimed: boolean; bonusXpClaimed: boolean }>>({});
   const [showLevelDropdown, setShowLevelDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchContent();
+    fetchProfile();
+  }, [fetchContent, fetchProfile]);
 
   useEffect(() => {
     if (found) setData(found);
@@ -57,14 +61,8 @@ export default function ScenarioDetailPage() {
     if (!data) return;
 
     // Resolve level once: saved setting > profile CEFR > default B1
-    let levelId = 2;
-    Promise.all([
-      fetch(`/api/user/scenario-setting?scenarioId=${data.id}`).then((r) => r.json()),
-      fetch("/api/user/profile").then((r) => r.json()),
-    ]).then(([settingRes, profileRes]) => {
-      levelId = settingRes.selectedLevelId || LEVEL_MAP[profileRes.cefrLevel] || 2;
-      setActiveLevel(levelId);
-    }).catch(() => {});
+    const levelId = LEVEL_MAP[scenarioLevels[data.id]] || LEVEL_MAP[cefrLevel] || 2;
+    setActiveLevel(levelId);
 
     // Collect all experience IDs and fetch progress
     const expIds = new Set<number>();
@@ -78,7 +76,7 @@ export default function ScenarioDetailPage() {
         .then((r) => r.json()).then(setExpProgress).catch(() => {});
     }
     refreshStats();
-  }, [status, data]);
+  }, [status, data, scenarioLevels]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -106,16 +104,14 @@ export default function ScenarioDetailPage() {
     );
   }
 
-  const currentLevel = data.levels?.find((l) => l.level.id === activeLevel) || data.levels?.[0];
+  const currentLevel = data.levels?.find((l) => l.level.id === activeLevel);
   const levelLabel = currentLevel?.level.name || "B1";
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       {/* Hero */}
-      <header className="relative h-64 md:h-80 w-full overflow-hidden">
-        <img src={HERO_IMAGES[slug as string] || "/images/onboarding-bg.jpg"} alt={data.name} className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-between p-margin-mobile">
+      <HeroMedia slug={slug as string} altText={data.name} className="h-64 md:h-80 w-full">
+        <div className="flex flex-col justify-between h-full p-margin-mobile">
           <div className="flex justify-between items-center">
             <Link href="/home" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/20 transition-colors">
               <span className="material-symbols-outlined">arrow_back</span>
@@ -166,7 +162,7 @@ export default function ScenarioDetailPage() {
             </div>
           </div>
         </div>
-      </header>
+      </HeroMedia>
 
       {/* Per-scenario level info banner */}
       <section className="max-w-[1280px] mx-auto px-margin-mobile pt-4 pb-0">
@@ -179,10 +175,26 @@ export default function ScenarioDetailPage() {
         </div>
       </section>
 
+      {/* Level unavailable */}
+      {!currentLevel && (
+        <section className="max-w-[1280px] mx-auto px-margin-mobile pt-6 pb-0">
+          <div className="bg-surface-container rounded-xl p-8 text-center border border-outline-variant/30">
+            <span className="material-symbols-outlined text-4xl text-outline-variant mb-3">lock</span>
+            <h3 className="text-lg font-bold text-on-surface mb-1">Coming Soon</h3>
+            <p className="text-sm text-on-surface-variant">
+              {data.levels?.length
+                ? "This content isn't available at your current level yet. Try switching levels above."
+                : "This scenario is under development."}
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Content */}
+      {currentLevel && (
       <section className="max-w-[1280px] mx-auto px-margin-mobile py-6">
         <div className="space-y-6">
-          {currentLevel?.modules.map((mod, idx) => (
+          {currentLevel.modules.map((mod, idx) => (
             <div key={mod.id} className="bg-white rounded-xl border border-outline-variant/30 overflow-hidden shadow-sm">
               <button
                 onClick={(e) => {
@@ -218,7 +230,7 @@ export default function ScenarioDetailPage() {
                   const isCompleted = prog?.completed;
                   const hasBonus = prog?.bonusXpClaimed;
                   return (
-                    <Link
+                    <PendingLink
                       key={exp.id}
                       href={`/experience/${exp.id}`}
                       className="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors"
@@ -241,7 +253,7 @@ export default function ScenarioDetailPage() {
                           <span className="bg-primary text-white text-xs px-3 py-1 rounded-full font-semibold">START</span>
                         )}
                       </div>
-                    </Link>
+                    </PendingLink>
                   );
                 })}
               </div>
@@ -249,6 +261,7 @@ export default function ScenarioDetailPage() {
           ))}
         </div>
       </section>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    env: { NODE_ENV: "test" },
     setupFiles: ["./src/__tests__/setup.tsx"],
     exclude: ["e2e/**", "node_modules/**"],
   },

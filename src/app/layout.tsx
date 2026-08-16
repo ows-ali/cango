@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import { PwaRegister } from "@/components/PwaRegister";
+import { getLang } from "@/lib/lang-config";
 
 import "./globals.css";
 
+const config = getLang();
+
 export const metadata: Metadata = {
-  title: "CanGo — Learn Italian for Real Life",
-  description: "Practice realistic Italian scenarios for life in Italy",
+  title: `${config.brand} — Real Life Scenarios`,
+  description: `${config.practiceDesc}`,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -22,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#faf8ff",
+  themeColor: "#fffbf5",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -44,6 +49,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         <Providers>{children}</Providers>
         <PwaRegister />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

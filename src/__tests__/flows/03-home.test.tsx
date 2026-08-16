@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderWithProviders, screen, waitFor } from "@/__tests__/utils";
+import { getLang } from "@/lib/lang-config";
 import HomePage from "@/app/(main)/home/page";
 
 describe("03 — Home Page", () => {
   it("shows skeleton cards while content loads", () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByText("My Italy")).toBeInTheDocument();
+    expect(screen.getByText(getLang().mySection)).toBeInTheDocument();
     expect(screen.getByText(/Ready to master/)).toBeInTheDocument();
   });
 
@@ -16,7 +17,6 @@ describe("03 — Home Page", () => {
       expect(screen.getByText("Transportation")).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    expect(screen.getByText("Doctor Visit")).toBeInTheDocument();
     expect(screen.getByText("Job Interview")).toBeInTheDocument();
   });
 
@@ -33,13 +33,13 @@ describe("03 — Home Page", () => {
 
   it("shows correct heading and greeting", () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByText("Buongiorno!")).toBeInTheDocument();
+    expect(screen.getByText(getLang().greeting)).toBeInTheDocument();
     expect(screen.getByText(/Ready to master/)).toBeInTheDocument();
   });
 
-  it("shows Today's Goal section", () => {
+  it("shows My Italy section", () => {
     renderWithProviders(<HomePage />);
-    expect(screen.getByText("Today's Goal")).toBeInTheDocument();
+    expect(screen.getByText(getLang().mySection)).toBeInTheDocument();
   });
 
   it("each scenario card links to correct detail page", async () => {
@@ -64,7 +64,7 @@ describe("03 — Home Page", () => {
     }, { timeout: 5000 });
 
     const cards = container.querySelectorAll("a[href*='/scenario/']");
-    expect(cards.length).toBe(3);
+    expect(cards.length).toBe(2);
 
     const section = container.querySelector("section.flex.flex-col");
     expect(section).toBeDefined();
@@ -77,7 +77,7 @@ describe("03 — Home Page", () => {
       expect(screen.getByText("Transportation")).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    const startButtons = screen.getAllByText("Start");
-    expect(startButtons.length).toBe(3);
+    const startButtons = screen.getAllByText(/^Start/);
+    expect(startButtons.length).toBe(2);
   });
 });

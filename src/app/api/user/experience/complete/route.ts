@@ -80,24 +80,19 @@ export async function POST(req: Request) {
 
     const { data: existingActivity } = await supabase
       .from("user_activity")
-      .select("*")
+      .select("xp_earned")
       .eq("user_id", uid)
       .eq("date", today)
       .maybeSingle();
 
-    if (existingActivity) {
-      const { error: actError } = await supabase
-        .from("user_activity")
-        .update({ xp_earned: (existingActivity.xp_earned ?? 0) + xpReward })
-        .eq("user_id", uid)
-        .eq("date", today);
-      if (actError) throw actError;
-    } else {
-      const { error: actError } = await supabase
-        .from("user_activity")
-        .insert({ user_id: uid, date: today, xp_earned: xpReward });
-      if (actError) throw actError;
-    }
+    const currentXp = existingActivity?.xp_earned ?? 0;
+    const { error: actError } = await supabase
+      .from("user_activity")
+      .upsert(
+        { user_id: uid, date: today, xp_earned: currentXp + xpReward },
+        { onConflict: "user_id, date", ignoreDuplicates: false }
+      );
+    if (actError) throw actError;
   }
 
   return NextResponse.json({ lessonXpAwarded: true, bonusXpClaimed: existing?.bonus_xp_claimed ?? false });

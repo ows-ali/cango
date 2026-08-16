@@ -26,3 +26,25 @@ export async function GET() {
     goals: user.goals,
   });
 }
+
+export async function PATCH(req: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { cefrLevel } = await req.json();
+
+  if (!cefrLevel || !["A1", "A2", "B1", "B2"].includes(cefrLevel)) {
+    return NextResponse.json({ error: "Invalid level" }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ cefr_level: cefrLevel })
+    .eq("id", session.user.id);
+
+  if (error) throw error;
+
+  return NextResponse.json({ success: true, cefrLevel });
+}

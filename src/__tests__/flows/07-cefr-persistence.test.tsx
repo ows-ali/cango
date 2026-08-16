@@ -3,12 +3,12 @@ import { renderWithProviders, screen, waitFor, fireEvent } from "@/__tests__/uti
 import { resetStores } from "@/__tests__/api/mocks/handlers";
 import ScenarioPage from "@/app/(main)/scenario/[slug]/page";
 
-const mockUseParams = vi.hoisted(() => vi.fn(() => ({ slug: "doctor" })));
+const mockUseParams = vi.hoisted(() => vi.fn(() => ({ slug: "transportation" })));
 
 vi.mock("next/navigation", () => ({
   useParams: mockUseParams,
   useRouter: () => ({ push: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
-  usePathname: () => "/scenario/doctor",
+  usePathname: () => "/scenario/transportation",
   Link: ({ children, href }: any) => <a href={href}>{children}</a>,
 }));
 
@@ -17,24 +17,23 @@ describe("07 — CEFR Persistence Flow", () => {
     resetStores();
   });
 
-  it("shows default CEFR level on scenario page (no saved setting → A2)", async () => {
+  it("shows default CEFR level on scenario page (from saved setting → B1)", async () => {
     renderWithProviders(<ScenarioPage />);
 
     await waitFor(() => {
-      const heading = screen.getByRole("heading", { name: /doctor visit/i });
+      const heading = screen.getByRole("heading", { name: /transportation/i });
       expect(heading).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    // Doctor Visit has no saved level → defaults to A2 (the only level available)
-    const levelButton = screen.getByRole("button", { name: /a2/i });
+    const levelButton = screen.getByRole("button", { name: /b1/i });
     expect(levelButton).toBeInTheDocument();
   });
 
-  it("shows experience from the default level (A2)", async () => {
+  it("shows experience from the selected level (B1)", async () => {
     renderWithProviders(<ScenarioPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Calling the Practice")).toBeInTheDocument();
+      expect(screen.getByText("Platform Changes")).toBeInTheDocument();
     }, { timeout: 5000 });
   });
 
@@ -50,26 +49,23 @@ describe("07 — CEFR Persistence Flow", () => {
     const { unmount } = renderWithProviders(<ScenarioPage />);
 
     await waitFor(() => {
-      const heading = screen.getByRole("heading", { name: /doctor visit/i });
+      const heading = screen.getByRole("heading", { name: /transportation/i });
       expect(heading).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    // Only A2 exists for Doctor Visit, so the dropdown shows A2
-    const levelButton = screen.getByRole("button", { name: /a2/i });
+    const levelButton = screen.getByRole("button", { name: /b1/i });
     expect(levelButton).toBeInTheDocument();
 
     unmount();
 
-    // Re-mount (simulate navigate away and back)
     const { unmount: unmount2 } = renderWithProviders(<ScenarioPage />);
 
     await waitFor(() => {
-      const heading = screen.getByRole("heading", { name: /doctor visit/i });
+      const heading = screen.getByRole("heading", { name: /transportation/i });
       expect(heading).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    // Level should still show A2
-    const levelBtn = screen.getByRole("button", { name: /a2/i });
+    const levelBtn = screen.getByRole("button", { name: /b1/i });
     expect(levelBtn).toBeInTheDocument();
 
     unmount2();

@@ -1,27 +1,103 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
+import { getLang } from "@/lib/lang-config";
+
+const betaCodeRequired = process.env.NEXT_PUBLIC_BETA_CODE_REQUIRED !== "false";
 
 export default function AuthPage() {
+  const { data: session, status } = useSession();
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [showCodeRequest, setShowCodeRequest] = useState(false);
+  const [requestEmail, setRequestEmail] = useState("");
+  const [requestMessage, setRequestMessage] = useState("");
+  const [requestCode, setRequestCode] = useState("");
+  const [requestLoading, setRequestLoading] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  if (status === "loading") return null;
+  if (session) {
+    router.push("/home");
+    return null;
+  }
+
+  const verifyCode = async (value: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/beta/verify?code=${encodeURIComponent(value.trim())}`);
+      const data = await res.json();
+      return data.valid === true;
+    } catch {
+      return false;
+    }
+  };
+
+  const confirmSession = async (): Promise<void> => {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        if (data?.user) return;
+      } catch {
+        // session endpoint unreachable — retry
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  };
+
+  const handleRequestCode = async () => {
+    if (!requestEmail.trim()) return;
+    setRequestLoading(true);
+    setRequestMessage("");
+    setRequestCode("");
+    try {
+      const res = await fetch("/api/beta/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: requestEmail, origin: window.location.origin }),
+      });
+      const data = await res.json();
+      setRequestMessage(data.message || data.error || "Something went wrong — please try again.");
+      if (typeof data.code === "string") setRequestCode(data.code);
+    } catch {
+      setRequestMessage("Something went wrong — please try again.");
+    }
+    setRequestLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (mode === "signup" && betaCodeRequired) {
+      const trimmedCode = code.trim();
+      if (!trimmedCode) {
+        setError("Enter your access code — it's free during beta.");
+        return;
+      }
+      setLoading(true);
+      const valid = await verifyCode(trimmedCode);
+      if (!valid) {
+        setLoading(false);
+        setError("Invalid access code");
+        return;
+      }
+    }
+
     setLoading(true);
 
     const result = await signIn("credentials", {
       email,
       password,
       mode,
+      ...(mode === "signup" ? { code } : {}),
       redirect: false,
     });
 
@@ -32,7 +108,13 @@ export default function AuthPage() {
       return;
     }
 
-    router.push(mode === "signup" ? "/onboarding/welcome" : "/home");
+    if (mode === "signup") {
+      await confirmSession();
+      window.location.href = "/onboarding/welcome";
+    } else {
+      await confirmSession();
+      router.push("/home");
+    }
   };
 
   return (
@@ -51,7 +133,7 @@ export default function AuthPage() {
                 {mode === "signup" ? "Create your account" : "Welcome back"}
               </h2>
               <p className="text-on-surface-variant" style={{ fontFamily: "Inter, sans-serif", fontSize: "16px", lineHeight: "24px" }}>
-                {mode === "signup" ? "Unlock your linguistic potential today." : "Continue your Italian journey."}
+                {mode === "signup" ? "Unlock your linguistic potential today." : `Continue your ${getLang().label} journey.`}
               </p>
             </div>
 
@@ -78,6 +160,69 @@ export default function AuthPage() {
                   className="w-full px-4 py-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-fixed transition-all"
                 />
               </div>
+
+              {mode === "signup" && betaCodeRequired && (
+                <div>
+                  <label className="block text-sm font-medium text-on-surface mb-1.5">Access code</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter your access code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="w-full px-4 py-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-fixed transition-all"
+                  />
+                  <p className="mt-1.5 text-xs text-on-surface-variant">
+                    0€ free access — enter the code you were given.
+                  </p>
+
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={() => { setShowCodeRequest(!showCodeRequest); setRequestMessage(""); }}
+                      className="text-xs text-primary font-bold hover:underline"
+                    >
+                      Don&apos;t have a code yet?
+                    </button>
+                  </div>
+
+                  {showCodeRequest && (
+                    <div className="mt-3 space-y-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/40">
+                      <p className="text-xs text-on-surface-variant">
+                        Drop your email and we&apos;ll get you an access code.
+                      </p>
+                      <input
+                        type="email"
+                        placeholder="you@example.com"
+                        value={requestEmail}
+                        onChange={(e) => setRequestEmail(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleRequestCode(); } }}
+                        className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-white text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-fixed transition-all"
+                      />
+                      <label className="flex items-start gap-2 text-[11px] text-on-surface-variant">
+                        <input type="checkbox" className="mt-0.5" />
+                        <span>We&apos;ll use your email to send your access code and occasionally update you about CanGo. Unsubscribe anytime.</span>
+                      </label>
+                      <button
+                        type="button"
+                        disabled={requestLoading}
+                        onClick={handleRequestCode}
+                        className="w-full h-10 flex items-center justify-center gap-2 bg-primary text-on-primary rounded-xl font-semibold transition-all hover:bg-primary-container disabled:opacity-60"
+                      >
+                        <span>{requestLoading ? "Sending..." : "Request access code"}</span>
+                      </button>
+                      {requestMessage && (
+                        <p className="text-xs text-center text-green-600">{requestMessage}</p>
+                      )}
+                      {requestCode && (
+                        <p className="mt-2 text-center font-mono text-lg font-bold tracking-widest text-foreground">
+                          {requestCode}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <p className="text-sm text-error text-center">{error}</p>

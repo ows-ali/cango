@@ -5,9 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useStats } from "@/lib/stats-context";
 import { Logo } from "@/components/Logo";
+import { ChatUI } from "@/components/ChatUI";
+import { HeroMedia } from "@/components/HeroMedia";
+import { getLang } from "@/lib/lang-config";
 
 interface TranscriptLine {
-  id: number; targetText: string; translationText: string;
+  id: number; targetText: string; translationText: string; speaker: string | null;
 }
 
 interface QuestionOption {
@@ -28,7 +31,7 @@ interface Challenge {
 }
 
 interface ExperienceData {
-  id: number; title: string; audioUrl: string | null; duration: string;
+  id: number; title: string; audioUrl: string | null; imageUrl?: string | null; scenarioSlug?: string | null; duration: string;
   transcripts: TranscriptLine[]; questions: Question[]; challenges: Challenge[];
 }
 
@@ -72,10 +75,28 @@ export default function ExperiencePlayerPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [bonusDone, setBonusDone] = useState(false);
   const [progress, setProgress] = useState<{ completed: boolean; lessonXpClaimed: boolean; bonusXpClaimed: boolean } | null>(null);
+  const [vocabWords, setVocabWords] = useState<{ id: number; targetWord: string; translationText: string }[]>([]);
+  const [selectedWordIds, setSelectedWordIds] = useState<Set<number>>(new Set());
+  const [addingVocab, setAddingVocab] = useState(false);
   const waveformRef = useRef<HTMLDivElement>(null);
+  const langCode = getLang().code;
+  const voices = useRef<SpeechSynthesisVoice[]>([]);
+  const femaleRoles = ["ticket_agent", "shop_assistant", "doctor", "receptionist", "waiter", "nurse", "pharmacist"];
+
+  useEffect(() => {
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    if (voices.current.length > 0 || !("speechSynthesis" in window)) return;
+    const load = () => {
+      voices.current = speechSynthesis.getVoices().filter((v) => v.lang.startsWith(langCode));
+    };
+    load();
+    speechSynthesis.onvoiceschanged = load;
+    return () => { if ("speechSynthesis" in window) speechSynthesis.cancel(); };
+  }, []);
 
   // Challenge tab state
   const [activeTab, setActiveTab] = useState(0);
+  const [showAiChat, setShowAiChat] = useState(false);
   const [tabVocabCompleted, setTabVocabCompleted] = useState(false);
   const [tabArrangeCompleted, setTabArrangeCompleted] = useState(false);
   const [tabBestCompleted, setTabBestCompleted] = useState(false);
@@ -138,19 +159,82 @@ export default function ExperiencePlayerPage() {
     }).catch(() => { });
   }, [session, id]);
 
-  useEffect(() => {
-    if (!waveformRef.current || !data) return;
-    const bars = 60;
-    const wf = waveformRef.current;
-    wf.innerHTML = "";
-    for (let i = 0; i < bars; i++) {
-      const bar = document.createElement("div");
-      const height = Math.random() * 80 + 10;
-      bar.className = `w-1 rounded-t-full ${i < 20 ? "bg-primary" : "bg-primary/20"}`;
-      bar.style.height = `${height}%`;
-      wf.appendChild(bar);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  function parseDurationSeconds(durationStr?: string | null, transcripts?: TranscriptLine[]): number {
+    if (durationStr && durationStr.includes(":")) {
+      const [m, s] = durationStr.split(":").map(Number);
+      if (!isNaN(m) && !isNaN(s) && (m > 0 || s > 0)) {
+        return m * 60 + s;
+      }
     }
-  }, [data]);
+    if (transcripts && transcripts.length > 0) {
+      const charCount = transcripts.reduce((acc, t) => acc + t.targetText.length, 0);
+      return Math.max(15, Math.ceil(charCount / 10));
+    }
+    return 45;
+  }
+
+  function formatMMSS(totalSec: number): string {
+    const m = Math.floor(totalSec / 60);
+    const s = Math.floor(totalSec % 60);
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+  }
+
+  const totalSeconds = parseDurationSeconds(data?.duration, data?.transcripts);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+    if (isPlaying) {
+      timer = setInterval(() => {
+        setCurrentTime((prev) => {
+          if (prev >= totalSeconds) {
+            setIsPlaying(false);
+            if ("speechSynthesis" in window) speechSynthesis.cancel();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isPlaying, totalSeconds]);
+
+  function getVoiceForSpeaker(speaker: string | null): SpeechSynthesisVoice | null {
+    const v = voices.current;
+    if (v.length === 0) return null;
+    if (!speaker) return v[0];
+    const idx = femaleRoles.includes(speaker) ? 0 : Math.min(1, v.length - 1);
+    return v[idx] ?? v[0];
+  }
+
+  function speakerLabel(speaker: string): string {
+    const labels: Record<string, string> = {
+      passenger: "Passeggero", ticket_agent: "Bigliettaio",
+      customer: "Cliente", shop_assistant: "Commesso",
+      patient: "Paziente", doctor: "Dottore",
+      receptionist: "Receptionist", waiter: "Cameriere",
+      nurse: "Infermiere", pharmacist: "Farmacista",
+      guest: "Ospite", friend: "Amico",
+      colleague: "Collega", interviewer: "Interviewer",
+    };
+    return labels[speaker] ?? speaker;
+  }
+
+  function speakTranscript(index: number) {
+    if (!data || index >= data.transcripts.length) { setIsPlaying(false); return; }
+    const line = data.transcripts[index];
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(line.targetText);
+    utterance.lang = getLang().locale;
+    utterance.rate = 0.85;
+    const voice = getVoiceForSpeaker(line.speaker);
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => speakTranscript(index + 1);
+    speechSynthesis.speak(utterance);
+  }
 
   const togglePlay = useCallback(() => {
     if (!data) return;
@@ -159,17 +243,34 @@ export default function ExperiencePlayerPage() {
       setIsPlaying(false);
       return;
     }
-      const text = data.transcripts.map((t) => t.targetText).join(" ");
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "it-IT";
-      utterance.rate = 0.85;
-      utterance.onend = () => setIsPlaying(false);
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utterance);
-      setIsPlaying(true);
-    }
+    speechSynthesis.cancel();
+    speakTranscript(0);
+    setIsPlaying(true);
   }, [data, isPlaying]);
+
+  function handleReplay3() {
+    setCurrentTime((prev) => {
+      const next = Math.max(0, prev - 3);
+      if (data?.transcripts?.length) {
+        const lineIdx = Math.floor((next / totalSeconds) * data.transcripts.length);
+        if ("speechSynthesis" in window) speechSynthesis.cancel();
+        if (isPlaying) speakTranscript(lineIdx);
+      }
+      return next;
+    });
+  }
+
+  function handleForward3() {
+    setCurrentTime((prev) => {
+      const next = Math.min(totalSeconds, prev + 3);
+      if (data?.transcripts?.length) {
+        const lineIdx = Math.floor((next / totalSeconds) * data.transcripts.length);
+        if ("speechSynthesis" in window) speechSynthesis.cancel();
+        if (isPlaying) speakTranscript(lineIdx);
+      }
+      return next;
+    });
+  }
 
   // Per-tab completion (derived before early return so hooks stay ordered)
   const vocabChallengeDone = vocabMatchPairs.length > 0 && vocabMatchPairs.every((p) => p.matched);
@@ -200,6 +301,14 @@ export default function ExperiencePlayerPage() {
   useEffect(() => {
     if (bestChallengeDone && !tabBestCompleted) setTabBestCompleted(true);
   }, [bestChallengeDone]);
+
+  useEffect(() => {
+    if (completed && data) {
+      fetch(`/api/content/experience/${data.id}`).then((r) => r.json()).then((d) => {
+        if (d?.vocabulary?.length) setVocabWords(d.vocabulary);
+      }).catch(() => { });
+    }
+  }, [completed, data]);
 
   if (!data) {
     return (
@@ -255,6 +364,10 @@ export default function ExperiencePlayerPage() {
 
   function handleComplete() {
     if (!canComplete || completing || !data) return;
+    if (progress?.lessonXpClaimed) {
+      setCompleted(true);
+      return;
+    }
     setCompleting(true);
     const p1 = fetch("/api/user/experience/complete", {
       method: "POST",
@@ -281,24 +394,82 @@ export default function ExperiencePlayerPage() {
     }).catch(() => setCompleting(false));
   }
 
+  const handleAddVocab = async () => {
+    if (selectedWordIds.size === 0) { router.push("/home"); return; }
+    setAddingVocab(true);
+    try {
+      await fetch("/api/vocabulary/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wordIds: [...selectedWordIds] }),
+      });
+    } catch { }
+    router.push("/home");
+  };
+
   if (completed) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-margin-mobile">
-        <div className="text-center max-w-sm">
+      <div className="min-h-screen bg-background flex items-center justify-center px-margin-mobile py-12">
+        <div className="text-center max-w-sm w-full">
           <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-4xl text-white">check</span>
           </div>
           <h2 className="font-headline text-3xl text-on-surface mb-2">Completed!</h2>
           <p className="text-2xl font-bold text-primary mb-2">+{xpThisSession} XP</p>
-          <p className="text-on-surface-variant mb-8">
+          <p className="text-on-surface-variant mb-2">
             {xpThisSession === 70 ? "Great job with bonus!"
               : xpThisSession === 50 ? "Great job!"
                 : xpThisSession === 20 ? "Bonus claimed!"
                   : "Reviewing"}
           </p>
-          <button onClick={() => router.push("/home")} className="bg-primary text-on-primary px-8 py-3 rounded-lg font-semibold w-full">
-            Back to Home
-          </button>
+
+          {vocabWords.length > 0 && (
+            <div className="bg-white rounded-2xl border border-outline-variant/30 p-5 text-left mt-6 mb-6 shadow-sm">
+              <h3 className="font-bold text-on-surface mb-1">Add words to your vocabulary</h3>
+              <p className="text-xs text-on-surface-variant mb-4">Select words you want to practice later:</p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {vocabWords.map((vw) => (
+                  <label key={vw.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={selectedWordIds.has(vw.id)}
+                      onChange={() => {
+                        setSelectedWordIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(vw.id)) next.delete(vw.id);
+                          else next.add(vw.id);
+                          return next;
+                        });
+                      }}
+                      className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-on-surface">{vw.targetWord}</p>
+                      <p className="text-xs text-on-surface-variant">{vw.translationText}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push("/home")}
+              className="flex-1 border border-outline-variant text-on-surface px-5 py-3 rounded-xl font-medium text-sm hover:bg-surface-container-high transition-colors"
+            >
+              {vocabWords.length > 0 ? "Skip" : "Back to Home"}
+            </button>
+            {vocabWords.length > 0 && (
+              <button
+                onClick={handleAddVocab}
+                disabled={addingVocab}
+                className="flex-1 bg-primary text-on-primary px-5 py-3 rounded-xl font-semibold text-sm shadow-sm hover:bg-primary-container transition-colors disabled:opacity-50"
+              >
+                {addingVocab ? "Adding..." : `Add Selected (${selectedWordIds.size})`}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -323,36 +494,85 @@ export default function ExperiencePlayerPage() {
       <main className="flex-grow flex flex-col max-w-[1200px] mx-auto w-full gap-6 px-margin-mobile py-6 pb-32">
         {/* Hero + Audio */}
         <section className="w-full space-y-6">
-          <div className="relative w-full aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary-container to-primary">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-
-            <div className="absolute bottom-4 left-4">
+          <HeroMedia
+            slug={data.scenarioSlug ?? undefined}
+            mediaUrl={data.imageUrl}
+            altText={data.title}
+            aspectRatio="aspect-video md:aspect-[21/9]"
+            className="w-full rounded-2xl overflow-hidden shadow-lg"
+          >
+            <div className="absolute bottom-4 left-4 z-30">
               <h2 className="font-headline text-2xl text-white drop-shadow-lg">{data.title}</h2>
               <p className="text-white/80 text-sm">{data.duration}</p>
             </div>
-          </div>
+          </HeroMedia>
 
           {/* Waveform + Controls */}
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/30">
-            <div ref={waveformRef} className="flex items-end justify-between h-16 gap-1 mb-4 px-2" />
+            {/* Dynamic Equalizer Waveform Bars */}
+            <div className="flex items-end justify-between h-16 gap-1 mb-4 px-2 overflow-hidden">
+              {Array.from({ length: 48 }).map((_, i) => {
+                const progressRatio = totalSeconds > 0 ? currentTime / totalSeconds : 0;
+                const barRatio = i / 48;
+                const isPlayed = barRatio <= progressRatio;
+                const heights = [30, 45, 60, 80, 50, 35, 70, 90, 65, 40, 55, 75, 30, 60, 85, 45, 65, 95, 50, 35, 75, 60, 40, 80];
+                const baseHeight = heights[i % heights.length];
+
+                return (
+                  <div
+                    key={i}
+                    className={`w-1.5 rounded-t-full transition-all duration-300 ${isPlayed
+                        ? `bg-primary ${isPlaying ? "animate-eq" : ""}`
+                        : "bg-primary/20"
+                      }`}
+                    style={{
+                      height: `${baseHeight}%`,
+                      animationDelay: `${(i % 6) * 0.1}s`,
+                      animationDuration: `${0.4 + (i % 3) * 0.15}s`,
+                    }}
+                  />
+                );
+              })}
+            </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-on-surface-variant">0:00</span>
-              <div className="flex items-center gap-6">
-                <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">replay_10</button>
-                <button onClick={togglePlay} className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:opacity-90 transition-all">
-                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{isPlaying ? "pause" : "play_arrow"}</span>
+              <span className="text-xs font-semibold text-on-surface-variant min-w-[36px]">{formatMMSS(currentTime)}</span>
+              <div className="flex items-center gap-4 md:gap-6">
+                <button
+                  onClick={handleReplay3}
+                  className="flex items-center gap-1 text-on-surface-variant hover:text-primary font-bold text-xs bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/30 hover:border-primary transition-colors cursor-pointer"
+                  title="Rewind 3 seconds"
+                >
+                  <span className="material-symbols-outlined text-[16px]">replay</span>
+                  <span>-3s</span>
                 </button>
-                <button className="material-symbols-outlined text-on-surface-variant hover:text-primary">forward_30</button>
+
+                <button
+                  onClick={togglePlay}
+                  className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:opacity-90 transition-all shadow-md cursor-pointer"
+                >
+                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    {isPlaying ? "pause" : "play_arrow"}
+                  </span>
+                </button>
+
+                <button
+                  onClick={handleForward3}
+                  className="flex items-center gap-1 text-on-surface-variant hover:text-primary font-bold text-xs bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/30 hover:border-primary transition-colors cursor-pointer"
+                  title="Forward 3 seconds"
+                >
+                  <span>+3s</span>
+                  <span className="material-symbols-outlined text-[16px]" style={{ transform: "scaleX(-1)" }}>replay</span>
+                </button>
               </div>
-              <span className="text-xs text-on-surface-variant">{data.duration}</span>
+              <span className="text-xs font-semibold text-on-surface-variant min-w-[36px] text-right">{formatMMSS(totalSeconds)}</span>
             </div>
           </div>
         </section>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Transcript Column */}
-          <section className="lg:col-span-7 space-y-6">
+        {/* Content Stack */}
+        <div className="flex flex-col gap-6">
+          {/* Transcript */}
+          <section className="space-y-6">
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/30">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-headline text-xl text-on-surface">Transcript</h3>
@@ -364,6 +584,7 @@ export default function ExperiencePlayerPage() {
               <div className="space-y-4">
                 {data.transcripts.map((line) => (
                   <div key={line.id} className="p-3 rounded-lg hover:bg-surface-container-low transition-colors">
+                    {line.speaker && <span className="text-xs font-semibold text-primary mb-0.5 block">{speakerLabel(line.speaker)}</span>}
                     <p className="text-base text-on-surface leading-relaxed">{line.targetText}</p>
                     {showTranslation && <p className="text-sm text-on-surface-variant mt-1">{line.translationText}</p>}
                   </div>
@@ -372,8 +593,8 @@ export default function ExperiencePlayerPage() {
             </div>
           </section>
 
-          {/* Practice Column */}
-          <aside className="lg:col-span-5 space-y-6">
+          {/* Practice */}
+          <section className="space-y-6">
             <div className="flex items-center gap-2">
               <span className="w-2 h-8 bg-primary rounded-full" />
               <h3 className="font-headline text-xl text-on-surface">Practice</h3>
@@ -459,7 +680,7 @@ export default function ExperiencePlayerPage() {
                 </div>
               </div>
             )}
-          </aside>
+          </section>
         </div>
 
         {/* Bonus Challenge Section - placed after Practice, before Complete button */}
@@ -605,6 +826,35 @@ export default function ExperiencePlayerPage() {
                     )}
                   </>
                 )}
+              </div>
+            )}
+
+          </div>
+        </section>
+
+        {/* AI Tutor - collapsed by default */}
+        <section className="max-w-[1200px] mx-auto w-full">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/30">
+            <button
+              onClick={() => setShowAiChat(!showAiChat)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">auto_awesome</span>
+                <h4 className="font-headline text-lg text-on-surface">Practice with AI Tutor (Optional)</h4>
+              </div>
+              <span className={`material-symbols-outlined transition-transform ${showAiChat ? "rotate-180" : ""}`}>
+                expand_more
+              </span>
+            </button>
+            {showAiChat && (
+              <div className="mt-4 min-h-[300px]">
+                <ChatUI
+                  context={{ experienceId: data.id }}
+                  experienceTitle={data.title}
+                  roleSuggestions={[...new Set(data.transcripts.map(t => t.speaker).filter(Boolean))] as string[]}
+                  placeholder={`Type your response in ${getLang().label}...`}
+                />
               </div>
             )}
           </div>

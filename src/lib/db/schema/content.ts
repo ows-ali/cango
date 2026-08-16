@@ -56,6 +56,7 @@ export const transcriptLines = pgTable("transcript_lines", {
   order: integer("order").notNull().default(0),
   targetText: text("target_text").notNull(),
   translationText: text("translation_text").notNull(),
+  speaker: varchar("speaker", { length: 50 }),
 });
 
 export const words = pgTable("words", {

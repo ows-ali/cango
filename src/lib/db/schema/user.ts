@@ -53,7 +53,23 @@ export const userVocabulary = pgTable("user_vocabulary", {
   userId: text("user_id").notNull().references(() => users.id),
   wordId: integer("word_id").notNull().references(() => words.id),
   status: varchar("status", { length: 20 }).notNull().$type<"learning" | "review" | "mastered">().default("learning"),
+  notes: text("notes"),
+  scenarioId: integer("scenario_id").references(() => scenarios.id),
   addedAt: timestamp("added_at").defaultNow().notNull(),
 }, (table) => ({
   uniqueUserWord: uniqueIndex("unique_user_word").on(table.userId, table.wordId),
 }));
+
+export const betaCodes = pgTable("beta_codes", {
+  code: varchar("code", { length: 100 }).primaryKey(),
+  useCount: integer("use_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const betaRequests = pgTable("beta_requests", {
+  id: text("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  codeSentAt: timestamp("code_sent_at"),
+  ip: varchar("ip", { length: 45 }),
+});
