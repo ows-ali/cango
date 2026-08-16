@@ -461,18 +461,23 @@ Users can:
 
 ## 18. Progress Screen
 
+**Built at `/progress` (consumes `GET /api/user/stats`).**
+
 **Shows:**
-- XP
-- streak
-- completed experiences
-- scenario progress
+- XP (total)
+- streak (current + longest)
+- today's XP
+- completed experiences count
+- today's goal bar (`NEXT_PUBLIC_DAILY_GOAL_XP`, default 50 XP)
+- last 7 days activity chart (CSS bars)
+- scenario progress (per scenario at the user's selected CEFR level)
 
 *Example:*
 
-| Scenario | Level | Progress |
-|---|---|---|
-| Transportation | B1 | 12/20 experiences |
-| Doctor | A2 | 5/20 experiences |
+| Scenario | Progress |
+|---|---|
+| Transportation | 2/4 · 50% |
+| Doctor | 0/2 · 0% |
 
 ---
 
@@ -1397,5 +1402,49 @@ Every experience contains:
 - 2-3 MCQ questions (bilingual, with hoverable Italian words)
 - 1 Matching exercise (Italian-English pairs)
 - 3 Real Life Challenge tabs (all visible, user chooses any one for bonus XP)
+
+# 29. Beta Access & Monetization (v0.2)
+
+**Goal:** let a small audience in for free during beta, collect leads, and
+accept voluntary tips — no paid plans yet (payment provider undecided).
+
+## 29.1 Beta Access Gate
+
+- **Default:** signup requires a free access code (0€). Codes are
+  **unlimited-use and shareable** (e.g. WhatsApp groups).
+- Codes live in the `beta_codes` table (`code`, `use_count`); generated with
+  `npm run gen:code -- <code>` (targets the `APP_LANG` DB).
+- The `/auth` page verifies codes client-side (`GET /api/beta/verify`) and the
+  server re-validates on signup (case-insensitive) while incrementing
+  `use_count`.
+- Toggle the whole gate off with `BETA_CODE_REQUIRED=false` +
+  `NEXT_PUBLIC_BETA_CODE_REQUIRED=false`.
+
+## 29.2 Email Lead Capture + Auto-Delivery
+
+- Users without a code can drop their email ("mystery-user" flow). This saves
+  a `beta_requests` row (email unique, `requested_at`, `code_sent_at`, `ip`).
+- With `RESEND_API_KEY` configured, each request **instantly receives a fresh
+  unique code by email** (e.g. `cango-x7k2m9`) and `code_sent_at` is stamped.
+- Without a key, emails are collected silently and the owner sends codes
+  manually.
+
+## 29.3 Spam Protection (highlighted)
+
+- **Per-IP daily cap** — `BETA_MAX_PER_IP` (default 3) new requests per IP per
+  day → HTTP 429.
+- **Global daily cap** — `BETA_DAILY_LIMIT` (default 90) new requests per day →
+  HTTP 429 (kept under Resend's free-tier 100 emails/day).
+- **Email dedupe** — each email can only request once.
+
+## 29.4 Monetization (v0.2)
+
+- **Ko-fi tip jar** on `/profile` — link from `NEXT_PUBLIC_COFFEE_URL`, hidden
+  when unset. Tips are disclosed as taxable income (owner is a German
+  resident); the assistant will not help hide payments or taxes.
+- **Payment provider undecided:** Lemon Squeezy / Paddle (merchant of record)
+  vs. Ko-fi / PayPal. MoR is the compliant path to pay out internationally.
+
+---
 
 # End of CanGo PRD v0.1

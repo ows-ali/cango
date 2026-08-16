@@ -145,6 +145,27 @@ describe("01 — Auth Flow", () => {
     expect(vi.mocked(signIn)).not.toHaveBeenCalled();
   });
 
+  it("blocks signup when the access code field is empty", async () => {
+    renderWithProviders(<AuthPage />);
+
+    const { fireEvent } = await import("@testing-library/react");
+    fireEvent.change(screen.getByPlaceholderText("name@example.com"), {
+      target: { value: "new@user.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Create a password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Enter your access code"), {
+      target: { value: "   " },
+    });
+    screen.getByText("Create Account").click();
+
+    await waitFor(() => {
+      expect(screen.getByText("Enter your access code — it's free during beta.")).toBeInTheDocument();
+    });
+    expect(vi.mocked(signIn)).not.toHaveBeenCalled();
+  });
+
   it("captures email via the no-code request flow", async () => {
     renderWithProviders(<AuthPage />);
 

@@ -9,18 +9,21 @@
 - `@/` maps to `./src/`
 
 ## Commands
-- `npm run dev` — dev server at localhost:3000
+- `npm run dev` — dev server at localhost:3000 (targets `APP_LANG` DB; `npm run dev:de` forces German)
 - `npm run build` — generates icons → `vitest run` → `next build` (ALL three steps)
-- `npm test` — vitest (no DB, uses MSW mocks; 38 tests across 7 files)
+- `npm test` — vitest (no DB, uses MSW mocks; 60 tests across 11 files)
 - `npm run test:e2e` — Playwright (requires test user, see e2e/auth.setup.ts)
-- `npm run seed` — `dotenv -- tsx scripts/seed.ts` (idempotent, uses Drizzle ORM)
-- `npm run db:push` — `drizzle-kit push` (pushes schema to Supabase)
+- `npm run seed` — `dotenv -- tsx scripts/seed.ts` (idempotent, uses Drizzle ORM; `npm run seed:de` for German DB)
+- `npm run gen:code -- <code>...` — inserts beta access codes into the `APP_LANG` DB; `npm run gen:code:it` forces the Italian DB
+- `npm run db:push` — `drizzle-kit push` (pushes schema to Supabase; `db:push:de` for German DB)
 - `npm run db:studio` — Drizzle Studio GUI
 
 ## Auth
-- `middleware.ts` at root protects all routes except `/auth`, `/_next`, `/api/auth`, static assets
+- `middleware.ts` at root protects all routes except `/auth`, `/_next`, `/api/auth`, `/api/beta`, static assets
 - NextAuth Credentials provider with Supabase `users` table + bcryptjs password hashing
 - Auth page at `/auth` (signup/login in one page)
+- After login/signup the page confirms the session via `/api/auth/session` before navigating (avoids a middleware redirect loop on first load)
+- `trustHost: true` is set in the NextAuth config (`src/lib/auth.ts`)
 
 ## Database
 - **Two access patterns**: Drizzle ORM (`src/lib/db/index.ts`, postgres driver) for seed scripts; Supabase client (`src/lib/db-supabase.ts`, service role key) for API routes
@@ -29,19 +32,38 @@
 - CEFR level IDs: A1=4, A2=1, B1=2, B2=3
 
 ## Key Routes
-- `/auth` — login/signup (public)
+- `/auth` — login/signup (public); signup requires a beta access code by default
 - `/onboarding/welcome` → `/onboarding/level` → `/onboarding/goals` — sets CEFR level, seeds vocabulary
 - `/home` — main dashboard
 - `/tutor` — AI tutor with personalized suggestions based on completed experiences + CEFR
 - `/vocabulary` — kanban board (Learning/Review/Mastered), client-side scenario filtering, single fetch on mount
 - `/experience/[id]` — audio player + transcript + practice (MCQs, matching) + bonus challenges (3 tabs) + collapsible AI Tutor section
 - `/scenario/[slug]` — scenario overview with per-scenario CEFR level selector
-- `/profile`, `/progress` — user settings and stats
+- `/profile` — settings, Ko-fi tip jar card (hidden unless `NEXT_PUBLIC_COFFEE_URL` set)
+- `/progress` — stats dashboard consuming `/api/user/stats`
+
+## Beta Access (access codes + email capture)
+- Schema in `src/lib/db/schema/user.ts`: `beta_codes` (code PK, use_count, created_at — unlimited use) and `beta_requests` (id, email unique, requested_at, code_sent_at, ip)
+- Routes: `GET /api/beta/verify?code=` (public, `{ valid }`) and `POST /api/beta/request` (public)
+- Signup flow: `/auth` verifies the code client-side via `/api/beta/verify`, then `auth.ts` re-validates server-side against `beta_codes` (case-insensitive) and increments `use_count`
+- Gate toggle: `BETA_CODE_REQUIRED` (server) + `NEXT_PUBLIC_BETA_CODE_REQUIRED` (client), both default `true`
+- `POST /api/beta/request` collects a lead and, with `RESEND_API_KEY` set, generates a fresh `cango-xxxxxxxx` code, emails it via Resend (`src/lib/email.ts`), and stamps `code_sent_at`; no key → silent collection (manual sending)
+- **Spam protection built-in** (`src/app/api/beta/request/route.ts`): per-IP daily cap `BETA_MAX_PER_IP` (default 3, only enforced when an `x-forwarded-for` IP is present), global daily cap `BETA_DAILY_LIMIT` (default 90), and unique-email dedupe — over cap → HTTP 429
+- `use_count` increments before the duplicate-email check, so failed signups still tick it up (harmless for unlimited codes)
+- `gen-codes.ts` targets whatever DB `APP_LANG` points to (`.env` currently `APP_LANG=de` → German DB); the script logs the target lang
+- `beta_requests.ip` column is nullable; requires `db:push` to create
+
+## Monetization
+- Ko-fi tip jar on `/profile` — link from `NEXT_PUBLIC_COFFEE_URL`, hidden when unset
+- Daily goal on `/progress` — `NEXT_PUBLIC_DAILY_GOAL_XP` (default 50)
+- Payment provider (Lemon Squeezy/Paddle MoR vs. Ko-fi/PayPal) is still undecided — tip money is taxable income for the owner; the assistant will not help hide payments/taxes
 
 ## Testing
 - Vitest: MSW mocks all API calls, `jsdom` environment, `@testing-library/react`
 - next-auth, next/navigation, next/image are mocked globally via `src/__tests__/setup.tsx`
-- Test fixtures in `src/__tests__/fixtures.ts`, MSW handlers in `src/__tests__/api/mocks/`
+- Test fixtures in `src/__tests__/fixtures.ts`, MSW handlers in `src/__tests__/api/mocks/` (incl. `/api/beta/verify`, `/api/beta/request`, `/api/auth/session`)
+- Flow tests: `01-auth` (incl. beta code validation + email capture), `02-onboarding`, `03-home`, `04-scenario`, `05-experience`, `06-xp`, `07-cefr-persistence`, `08-progress`, `09-profile`
+- Route-level test `10-beta-request` exercises the real `/api/beta/request` logic (email send + rate limits) with mocked `@/lib/db-supabase` + `@/lib/email` — the only route-level suite, since MSW can't test the real send
 - E2E: Playwright with Chromium, headless=false by default, `playwright/.auth/user.json` for auth state
 
 ## Notable

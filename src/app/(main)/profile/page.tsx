@@ -8,9 +8,8 @@ import { useProfileStore } from "@/lib/stores/profile-store";
 
 const LEVELS = ["A1", "A2", "B1", "B2"] as const;
 
-const COFFEE_URL = process.env.NEXT_PUBLIC_COFFEE_URL;
-
 export default function ProfilePage() {
+  const coffeeUrl = process.env.NEXT_PUBLIC_COFFEE_URL;
   const { data: session } = useSession();
   const { cefrLevel, fetch: fetchProfile, updateCefr } = useProfileStore();
   const [showLogout, setShowLogout] = useState(false);
@@ -90,7 +89,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {COFFEE_URL && (
+        {coffeeUrl && (
           <div className="bg-white rounded-2xl border border-outline-variant/30 p-8 shadow-sm">
             <div className="text-center mb-4">
               <span className="material-symbols-outlined text-4xl text-primary">local_cafe</span>
@@ -100,7 +99,7 @@ export default function ProfilePage() {
               </p>
             </div>
             <a
-              href={COFFEE_URL}
+              href={coffeeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-semibold px-5 py-3 rounded-xl hover:bg-primary-container hover:text-on-primary-container transition-colors"

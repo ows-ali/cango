@@ -51,7 +51,7 @@ vi.mock("next/navigation", () => ({
   Link: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-const server = setupServer(...handlers);
+export const server = setupServer(...handlers);
 
 beforeAll(() => server.listen({ onUnhandledRequest: "warn" }));
 afterEach(() => {

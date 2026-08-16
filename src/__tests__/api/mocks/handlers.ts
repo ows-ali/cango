@@ -124,6 +124,10 @@ export const handlers = [
     return HttpResponse.json({ valid: code === "test-code" });
   }),
 
+  http.get("*/api/auth/session", () => {
+    return HttpResponse.json({ user: MOCK_USER });
+  }),
+
   http.post("*/api/beta/request", async ({ request }) => {
     const { email } = (await request.json()) as { email?: string };
     if (!email) return HttpResponse.json({ error: "Please enter a valid email address." }, { status: 400 });

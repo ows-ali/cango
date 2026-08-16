@@ -31,7 +31,15 @@ export default function ProgressPage() {
   useEffect(() => {
     fetch("/api/user/stats")
       .then((res) => res.json())
-      .then(setStats)
+      .then((data) => {
+        if (
+          data &&
+          Array.isArray(data.weeklyActivity) &&
+          Array.isArray(data.scenarioProgress)
+        ) {
+          setStats(data);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

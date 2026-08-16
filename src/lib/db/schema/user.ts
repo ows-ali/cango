@@ -71,4 +71,5 @@ export const betaRequests = pgTable("beta_requests", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   requestedAt: timestamp("requested_at").defaultNow().notNull(),
   codeSentAt: timestamp("code_sent_at"),
+  ip: varchar("ip", { length: 45 }),
 });

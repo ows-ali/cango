@@ -38,6 +38,19 @@ export default function AuthPage() {
     }
   };
 
+  const confirmSession = async (): Promise<void> => {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        if (data?.user) return;
+      } catch {
+        // session endpoint unreachable — retry
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  };
+
   const handleRequestCode = async () => {
     if (!requestEmail.trim()) return;
     setRequestLoading(true);
@@ -93,8 +106,10 @@ export default function AuthPage() {
     }
 
     if (mode === "signup") {
+      await confirmSession();
       window.location.href = "/onboarding/welcome";
     } else {
+      await confirmSession();
       router.push("/home");
     }
   };
