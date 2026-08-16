@@ -51,3 +51,15 @@
 - Existing `src/lib/vocab-utils.ts` contains `seedVocabularyForUser()`, `getWordScenarios()`, `getScenarioWordIds()`
 - ChatUI supports role-play suggestions extracted from transcript speakers
 - AI chat route resolves CEFR level at scenario granularity, not just user global level
+
+## AI Observability (Langfuse)
+- AI tutor chats are traced with Langfuse via OpenTelemetry (AI SDK v6 `experimental_telemetry`), wired in `src/instrumentation.ts` + `src/lib/langfuse.ts` and the chat route
+- To enable: sign up free at `cloud.langfuse.com`, create a project, then set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` in `.env`
+- Tracing is a **no-op when the keys are absent** (dev/test unaffected); traces are tagged with `userId`, `sessionId`, `lang`, `provider`, `model`, `experienceId`, `cefrLevel`
+- Sentry is intentionally **not** used — error visibility is handled by Vercel
+
+## Fresh Setup (new empty Supabase projects)
+1. Create two Supabase projects (IT + DE); copy their DB URLs into `DATABASE_URL` / `DATABASE_URL_DE` and the Supabase URL/keys into the `_DE`-suffixed vars as needed
+2. `npm run db:push` then `npm run db:push:de` — creates the schema (no committed migrations; this project uses drizzle-kit push)
+3. `npm run seed` (IT) and `npm run seed:de` (DE) — seeds all content; matching activities are built with 5 real pairs by `buildMatchPairs` in `scripts/seed-helpers.ts` (no placeholder words)
+4. Media (`audio_url`/`image_url`) is not seeded — run `scripts/generate-audio.sh` if needed

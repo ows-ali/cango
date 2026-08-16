@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { streamText } from "ai";
+import { trace } from "@opentelemetry/api";
+import { observe, propagateAttributes, updateActiveObservation } from "@langfuse/tracing";
 import { auth } from "@/lib/auth";
 import { supabase } from "@/lib/db-supabase";
 import { getModel } from "@/lib/ai-provider";
 import { LANGUAGES } from "@/lib/lang-config";
+import { isLangfuseEnabled, forceFlushLangfuse } from "@/lib/langfuse";
 
 const langConfig = LANGUAGES[(process.env.APP_LANG as "it" | "de") || "it"];
 
-export async function POST(req: Request) {
+export const POST = observe(
+  async (req: Request) => {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -164,11 +168,45 @@ export async function POST(req: Request) {
 
   const systemPrompt = systemParts.join("\n");
 
-  const result = streamText({
-    model: getModel(),
-    system: systemPrompt,
-    messages: messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const sessionId = context?.experienceId ? `experience:${context.experienceId}` : "general";
+  const traceMetadata: Record<string, string> = {
+    lang: process.env.APP_LANG || "it",
+    provider: process.env.AI_PROVIDER || "gemini",
+    model: process.env.AI_MODEL || "",
+    experienceId: context?.experienceId ? String(context.experienceId) : "",
+    cefrLevel: level,
+  };
+  updateActiveObservation({ input: lastUserMessage });
+
+  const result = propagateAttributes(
+    { userId: session.user.id, sessionId, metadata: traceMetadata },
+    () =>
+      streamText({
+        model: getModel(),
+        system: systemPrompt,
+        messages: messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        experimental_telemetry: {
+          isEnabled: isLangfuseEnabled(),
+          functionId: "ai-tutor",
+          metadata: traceMetadata,
+        },
+        onFinish: async (res) => {
+          updateActiveObservation({ output: res.text });
+          trace.getActiveSpan()?.end();
+        },
+        onError: async (error) => {
+          updateActiveObservation({ output: error, level: "ERROR" });
+          trace.getActiveSpan()?.end();
+        },
+      })
+  );
+
+  after(async () => {
+    await forceFlushLangfuse();
   });
 
   return result.toTextStreamResponse();
-}
+  },
+  { name: "ai-tutor-chat", captureInput: false, captureOutput: false, endOnExit: false }
+);

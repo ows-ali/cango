@@ -1,4 +1,4 @@
-import { and, eq, inArray, innerJoin } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../src/lib/db";
 import {
   languages, scenarios, levels, scenarioLevels, modules, experiences,

@@ -185,7 +185,7 @@ export async function seedHotel() {
     undefined,
     [
       { text: "auschecken", translation: "to check out", correctValue: "checkout" },
-      { text: "der Gepäckraum", translation: "luggage room", correctValue: "luggage" },
+      { text: "der Gepäckraum", translation: "luggage room", correctValue: "luggage_room" },
       { text: "das Gepäck", translation: "luggage", correctValue: "luggage" }
     ],
   );

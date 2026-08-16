@@ -53,7 +53,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     questionText: q.question_text,
     translationText: q.translation_text,
     order: q.order,
-    options: (q.question_options ?? []).map((o) => ({
+    options: (q.question_options ?? []).map((o: { id: number; question_id: number; target_text: string; translation_text: string; correct: boolean }) => ({
       id: o.id,
       questionId: o.question_id,
       targetText: o.target_text,
@@ -68,7 +68,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     type: ch.type,
     question: ch.question,
     questionTranslation: ch.question_translation,
-    items: (ch.challenge_items ?? []).map((i) => ({
+    items: (ch.challenge_items ?? []).map((i: { id: number; challenge_id: number; text: string; translation: string; order: number; correct_value: string }) => ({
       id: i.id,
       challengeId: i.challenge_id,
       text: i.text,
